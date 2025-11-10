@@ -10,6 +10,7 @@ import { RequestsView } from './components/RequestsView';
 import { PaymentsView } from './components/PaymentsView';
 import { ProfileView } from './components/ProfileView';
 import { PastNotesView } from './components/PastNotesView';
+import { SettingsView } from './components/SettingsView';
 import { EnhancedAuthModal } from './components/EnhancedAuthModal';
 import { MinimalPostModal } from './components/MinimalPostModal';
 import { OnboardingModal } from './components/OnboardingModal';
@@ -131,6 +132,8 @@ function AppContent() {
         return <ProfileView />;
       case 'past-notes':
         return <PastNotesView />;
+      case 'settings':
+        return <SettingsView />;
       default:
         return <WallView searchQuery={searchQuery} />;
     }
