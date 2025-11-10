@@ -86,7 +86,6 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
   const [unlocked, setUnlocked] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
-  const [error, setError] = useState('');
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -117,11 +116,9 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
   useEffect(() => {
     if (selectedNote && profile) {
       checkStatus();
-      setError('');
     } else {
       setRequestStatus('none');
       setUnlocked(false);
-      setError('');
     }
   }, [selectedNote, profile]);
 
@@ -193,12 +190,12 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
     console.log('handleRequestConnect called', { profile, selectedNote, requesting });
 
     if (!profile) {
-      setError('You must be logged in to send a request');
+      console.error('You must be logged in to send a request');
       return;
     }
 
     if (!selectedNote) {
-      setError('No note selected');
+      console.error('No note selected');
       return;
     }
 
@@ -208,7 +205,6 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
     }
 
     setRequesting(true);
-    setError('');
     console.log('Sending request to Supabase...');
 
     try {
@@ -225,7 +221,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
           console.log('Duplicate request, setting status to pending');
           setRequestStatus('pending');
         } else if (error.message.includes('Daily request limit reached')) {
-          setError('You have reached your daily request limit. Try again tomorrow.');
+          console.error('Daily request limit reached');
         } else {
           console.error('Unexpected error:', error);
           throw error;
@@ -236,7 +232,6 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
       }
     } catch (err: any) {
       console.error('Request error:', err);
-      setError(err.message || 'Failed to send request. Please try again.');
     } finally {
       setRequesting(false);
       console.log('Request completed');

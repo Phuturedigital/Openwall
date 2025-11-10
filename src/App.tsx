@@ -15,6 +15,7 @@ import { MinimalPostModal } from './components/MinimalPostModal';
 import { WelcomeModal } from './components/WelcomeModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Toast } from './components/Toast';
+import { FloatingSearchBar } from './components/FloatingSearchBar';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -25,6 +26,12 @@ function AppContent() {
   const [toastMessage, setToastMessage] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const showSearchBar = currentView === 'wall' || currentView === 'recent-notes';
 
   useEffect(() => {
     const onboarded = localStorage.getItem('onboarded');
@@ -106,7 +113,7 @@ function AppContent() {
       case 'wall':
         return <WallView searchQuery={searchQuery} />;
       case 'recent-notes':
-        return <RecentNotesView />;
+        return <RecentNotesView searchQuery={searchQuery} />;
       case 'my-notes':
         return <MyNotesView />;
       case 'requests':
@@ -129,9 +136,9 @@ function AppContent() {
         onViewChange={handleViewChange}
         onPostClick={handlePostClick}
         onSignIn={() => setShowAuthModal(true)}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
       />
+
+      {showSearchBar && <FloatingSearchBar onSearch={handleSearchChange} />}
 
       {renderView()}
 

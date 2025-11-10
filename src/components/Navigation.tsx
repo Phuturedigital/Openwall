@@ -1,9 +1,8 @@
 import { motion } from 'framer-motion';
-import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Clock, Search, Inbox } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Clock, Inbox } from 'lucide-react';
+import { useState } from 'react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
 import { Logo } from './Logo';
 
 type NavigationProps = {
@@ -11,36 +10,13 @@ type NavigationProps = {
   onViewChange: (view: string) => void;
   onPostClick: () => void;
   onSignIn: () => void;
-  searchQuery?: string;
-  onSearchChange?: (query: string) => void;
 };
 
-export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, searchQuery = '', onSearchChange }: NavigationProps) {
+export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }: NavigationProps) {
   const { user, profile, signOut } = useAuth();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [hasPastNotes, setHasPastNotes] = useState(false);
 
-  useEffect(() => {
-    if (profile && (profile.user_type === 'client' || profile.user_type === 'hybrid')) {
-      checkForPastNotes();
-    }
-  }, [profile]);
-
-  async function checkForPastNotes() {
-    if (!profile) return;
-
-    const { data, error } = await supabase
-      .from('notes')
-      .select('id')
-      .eq('user_id', profile.id)
-      .eq('status', 'fulfilled')
-      .limit(1);
-
-    if (!error && data && data.length > 0) {
-      setHasPastNotes(true);
-    }
-  }
 
   const navItems = [
     { id: 'wall', label: 'Wall', icon: LayoutGrid, ariaLabel: 'Go to Wall' },
@@ -74,22 +50,7 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, s
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Openwall</h1>
             </div>
 
-            {currentView === 'wall' && onSearchChange && (
-              <div className="hidden md:flex flex-1 max-w-md mx-4">
-                <div className="relative w-full">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    placeholder="Search notes..."
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1 ml-auto">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;
@@ -185,20 +146,6 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, s
             className="md:hidden py-4 border-t border-gray-100 dark:border-gray-800"
           >
             <div className="flex flex-col gap-2">
-              {currentView === 'wall' && onSearchChange && (
-                <div className="px-4 pb-2">
-                  <div className="relative w-full">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => onSearchChange(e.target.value)}
-                      placeholder="Search notes..."
-                      className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                    />
-                  </div>
-                </div>
-              )}
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;

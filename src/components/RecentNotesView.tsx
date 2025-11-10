@@ -32,7 +32,11 @@ function getCategoryLabel(category: string): string {
   return CATEGORY_LABELS[category] || CATEGORY_LABELS.other;
 }
 
-export function RecentNotesView() {
+type RecentNotesViewProps = {
+  searchQuery?: string;
+};
+
+export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -44,7 +48,7 @@ export function RecentNotesView() {
 
   useEffect(() => {
     loadRecentNotes();
-  }, []);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (selectedNote && profile) {
@@ -55,10 +59,16 @@ export function RecentNotesView() {
   async function loadRecentNotes() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('notes')
         .select('*, profiles(id, full_name, avatar_url, city)')
-        .eq('status', 'open')
+        .eq('status', 'open');
+
+      if (searchQuery.trim()) {
+        query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(20);
 
