@@ -12,7 +12,6 @@ import { ProfileView } from './components/ProfileView';
 import { PastNotesView } from './components/PastNotesView';
 import { AuthModal } from './components/AuthModal';
 import { MinimalPostModal } from './components/MinimalPostModal';
-import { WelcomeModal } from './components/WelcomeModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Toast } from './components/Toast';
 import { FloatingSearchBar } from './components/FloatingSearchBar';
@@ -140,8 +139,6 @@ function AppContent() {
       {showSearchBar && <FloatingSearchBar onSearch={handleSearchChange} />}
 
       {renderView()}
-
-      <WelcomeModal />
 
       {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
 
