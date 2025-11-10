@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { User, MapPin, Phone, Mail, Building, Shield, Briefcase, Award, FileText, X, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, MapPin, Phone, Mail, Building, Shield, Briefcase, Award, FileText, X, HelpCircle, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 const EXPERIENCE_OPTIONS = ['<1 year', '1-3 years', '3-5 years', '5+ years'];
 const INDUSTRY_OPTIONS = ['Tech', 'Design', 'Marketing', 'Finance', 'Education', 'Healthcare', 'Retail', 'Other'];
@@ -36,6 +37,7 @@ export function ProfileView() {
   const [skillInput, setSkillInput] = useState('');
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
   const [showGuideMessage, setShowGuideMessage] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -502,6 +504,24 @@ export function ProfileView() {
 
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm mt-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+            <Lock className="w-5 h-5" />
+            Account Security
+          </h3>
+
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Keep your account secure by regularly updating your password.
+          </p>
+
+          <button
+            onClick={() => setShowPasswordModal(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 cursor-pointer"
+          >
+            Change Password
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
             <HelpCircle className="w-5 h-5" />
             Help & Support
           </h3>
@@ -527,6 +547,12 @@ export function ProfileView() {
             Show Guide Again
           </button>
         </div>
+
+        <AnimatePresence>
+          {showPasswordModal && (
+            <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

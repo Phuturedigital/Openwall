@@ -33,12 +33,15 @@ export function EditNoteModal({ note, onClose, onSuccess }: EditNoteModalProps) 
         body: body.trim(),
         budget: budgetCents,
         city: city.trim() || null,
+        updated_at: new Date().toISOString(),
       })
       .eq('id', note.id);
 
+    setSaving(false);
+
     if (updateError) {
-      setError('Failed to update note');
-      setSaving(false);
+      console.error('Note update error:', updateError);
+      setError(`Failed to update note: ${updateError.message}`);
       return;
     }
 
