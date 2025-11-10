@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import { Navigation } from './components/Navigation';
 import { WallView } from './components/WallView';
+import { RecentNotesView } from './components/RecentNotesView';
 import { MyNotesView } from './components/MyNotesView';
 import { PaymentsView } from './components/PaymentsView';
 import { ProfileView } from './components/ProfileView';
@@ -76,7 +77,7 @@ function AppContent() {
   };
 
   const handleViewChange = (view: string) => {
-    if (!user && (view === 'my-notes' || view === 'payments' || view === 'profile' || view === 'past-notes')) {
+    if (!user && (view === 'my-notes' || view === 'payments' || view === 'profile')) {
       setShowAuthModal(true);
       return;
     }
@@ -103,6 +104,8 @@ function AppContent() {
     switch (currentView) {
       case 'wall':
         return <WallView searchQuery={searchQuery} />;
+      case 'recent-notes':
+        return <RecentNotesView />;
       case 'my-notes':
         return <MyNotesView />;
       case 'payments':
