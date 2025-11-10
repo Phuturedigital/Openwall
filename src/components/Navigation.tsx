@@ -48,16 +48,8 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, s
   ];
 
   if (profile) {
-    if (profile.user_type === 'client' || profile.user_type === 'hybrid') {
-      navItems.push({
-        id: 'my-notes',
-        label: 'My Notes',
-        icon: FileText,
-        ariaLabel: 'View My Notes'
-      });
-    }
-
     navItems.push(
+      { id: 'my-notes', label: 'My Notes', icon: FileText, ariaLabel: 'View My Notes' },
       { id: 'requests', label: 'Requests', icon: Inbox, ariaLabel: 'View Requests' },
       { id: 'payments', label: 'Payments', icon: CreditCard, ariaLabel: 'View Payments' },
       { id: 'profile', label: 'Profile', icon: User, ariaLabel: 'Open Profile Menu' }
