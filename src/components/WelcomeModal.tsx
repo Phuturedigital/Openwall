@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { Logo } from './Logo';
 
 export function WelcomeModal() {
