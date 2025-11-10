@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Paperclip, AlertCircle, Edit2, Trash2, CheckCircle } from 'lucide-react';
+import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
