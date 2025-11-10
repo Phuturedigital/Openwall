@@ -168,21 +168,23 @@ export function ProfileView() {
             <div className="flex gap-4">
               <button
                 onClick={() => setRole('freelancer')}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
                   role === 'freelancer'
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
+                aria-label="Select freelancer role"
               >
                 Freelancer
               </button>
               <button
                 onClick={() => setRole('poster')}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
                   role === 'poster'
                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
+                aria-label="Select poster role"
               >
                 Poster
               </button>
@@ -200,7 +202,7 @@ export function ProfileView() {
               type="text"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
               placeholder="John Doe"
             />
           </div>
@@ -232,7 +234,7 @@ export function ProfileView() {
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 placeholder="Cape Town"
               />
             </div>
@@ -248,7 +250,7 @@ export function ProfileView() {
                 type="text"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 placeholder="Acme Inc."
               />
             </div>
@@ -265,7 +267,7 @@ export function ProfileView() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
               placeholder="+27 82 123 4567"
             />
           </div>
@@ -285,7 +287,7 @@ export function ProfileView() {
                   type="text"
                   value={profession}
                   onChange={(e) => setProfession(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                   placeholder="Graphic Designer"
                 />
               </div>
@@ -305,7 +307,7 @@ export function ProfileView() {
                     onFocus={() => setShowSkillDropdown(true)}
                     onBlur={() => setTimeout(() => setShowSkillDropdown(false), 200)}
                     disabled={skills.length >= 5}
-                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     placeholder={skills.length >= 5 ? "Maximum skills reached" : "Type to search skills..."}
                   />
 
@@ -315,7 +317,8 @@ export function ProfileView() {
                         <button
                           key={skill}
                           onClick={() => addSkill(skill)}
-                          className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white transition-colors"
+                          className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white transition-colors cursor-pointer"
+                          aria-label={`Add ${skill} skill`}
                         >
                           {skill}
                         </button>
@@ -333,7 +336,7 @@ export function ProfileView() {
                       {skill}
                       <button
                         onClick={() => removeSkill(skill)}
-                        className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors"
+                        className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors cursor-pointer"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -350,7 +353,7 @@ export function ProfileView() {
                   value={bio}
                   onChange={(e) => setBio(e.target.value.slice(0, 160))}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none cursor-pointer"
                   placeholder="Brief description of what you do..."
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -368,7 +371,7 @@ export function ProfileView() {
                 <select
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 >
                   <option value="">Select experience</option>
                   {EXPERIENCE_OPTIONS.map((exp) => (
@@ -393,7 +396,7 @@ export function ProfileView() {
                 <select
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 >
                   <option value="">Select industry</option>
                   {INDUSTRY_OPTIONS.map((ind) => (
@@ -412,7 +415,7 @@ export function ProfileView() {
                       addLookingFor(e.target.value);
                       e.target.value = '';
                     }}
-                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                   >
                     <option value="">Add a skill...</option>
                     {SKILL_OPTIONS.filter(s => !lookingFor.includes(s)).map((skill) => (
@@ -430,7 +433,7 @@ export function ProfileView() {
                       {item}
                       <button
                         onClick={() => removeLookingFor(item)}
-                        className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full p-0.5 transition-colors"
+                        className="hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full p-0.5 transition-colors cursor-pointer"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -488,7 +491,7 @@ export function ProfileView() {
             whileTap={{ scale: 0.98 }}
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </motion.button>
@@ -516,7 +519,7 @@ export function ProfileView() {
 
           <button
             onClick={handleShowGuideAgain}
-            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all cursor-pointer"
           >
             Show Guide Again
           </button>

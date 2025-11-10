@@ -64,7 +64,8 @@ export function EditNoteModal({ note, onClose, onSuccess }: EditNoteModalProps) 
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Edit Note</h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors cursor-pointer"
+            aria-label="Close edit modal"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -79,7 +80,7 @@ export function EditNoteModal({ note, onClose, onSuccess }: EditNoteModalProps) 
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={6}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none cursor-pointer"
               placeholder="Describe what you need..."
             />
           </div>
@@ -96,7 +97,7 @@ export function EditNoteModal({ note, onClose, onSuccess }: EditNoteModalProps) 
                 type="number"
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 placeholder="1000"
                 min="0"
                 step="1"
@@ -114,7 +115,7 @@ export function EditNoteModal({ note, onClose, onSuccess }: EditNoteModalProps) 
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 placeholder="Cape Town"
               />
             </div>
@@ -132,7 +133,8 @@ export function EditNoteModal({ note, onClose, onSuccess }: EditNoteModalProps) 
               whileTap={{ scale: 0.98 }}
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              aria-label="Save note changes"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </motion.button>
@@ -141,7 +143,8 @@ export function EditNoteModal({ note, onClose, onSuccess }: EditNoteModalProps) 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onClose}
-              className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+              className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all cursor-pointer"
+              aria-label="Cancel editing"
             >
               Cancel
             </motion.button>

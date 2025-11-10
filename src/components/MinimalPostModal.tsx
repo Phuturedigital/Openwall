@@ -165,7 +165,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Post a Note</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors cursor-pointer"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -192,7 +193,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 onChange={(e) => setBody(e.target.value)}
                 placeholder="Describe your need in detail..."
                 rows={6}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-pointer"
                 required
               />
             </div>
@@ -207,7 +208,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
                   placeholder="e.g., 2000"
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
               </div>
 
@@ -220,7 +221,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="e.g., Cape Town"
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
               </div>
             </div>
@@ -235,7 +236,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={profile?.email || 'your@email.com'}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
               </div>
 
@@ -248,7 +249,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+27 82 123 4567"
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
               </div>
             </div>
@@ -295,7 +296,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => handleSubmit(e, 'free')}
                 disabled={loading}
-                className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                aria-label="Post note for free"
               >
                 {loading ? 'Posting...' : 'Post Free'}
               </motion.button>
@@ -306,7 +308,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => handleSubmit(e, 'priority')}
                 disabled={loading}
-                className="flex-1 py-4 bg-gradient-to-r from-[#635BFF] to-[#7C3AED] text-white rounded-xl font-semibold shadow-lg shadow-[#635BFF]/20 hover:shadow-[#635BFF]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-4 bg-gradient-to-r from-[#635BFF] to-[#7C3AED] text-white rounded-xl font-semibold shadow-lg shadow-[#635BFF]/20 hover:shadow-[#635BFF]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                aria-label="Post priority note for R10"
               >
                 {loading ? 'Posting...' : 'Priority Post – R10'}
               </motion.button>
