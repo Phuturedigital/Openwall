@@ -4,6 +4,7 @@ import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, Check
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
+import { LoadingLogo } from './LoadingLogo';
 
 const NOTES_PER_PAGE = 24;
 
@@ -499,9 +500,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
         </div>
 
         <div ref={observerTarget} className="h-20 flex items-center justify-center">
-          {loading && (
-            <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
-          )}
+          {loading && <LoadingLogo className="w-8 h-8" />}
         </div>
       </div>
 

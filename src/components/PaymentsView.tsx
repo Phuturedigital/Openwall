@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CreditCard, Check, Clock, X } from 'lucide-react';
 import { supabase, Transaction } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { LoadingLogo } from './LoadingLogo';
 
 export function PaymentsView() {
   const { profile } = useAuth();
@@ -89,7 +90,7 @@ export function PaymentsView() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            <LoadingLogo className="w-10 h-10" />
           </div>
         ) : transactions.length === 0 ? (
           <div className="text-center py-20">

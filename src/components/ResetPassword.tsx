@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Check, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Check, AlertCircle, CheckCircle } from 'lucide-react';
+import { LoadingLogo } from './LoadingLogo';
 import { supabase } from '../lib/supabase';
 import { logUserActivity, ActivityActions } from '../lib/activityLogger';
 import {
@@ -256,7 +257,7 @@ export function ResetPassword() {
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <LoadingLogo className="w-5 h-5" />
                 Updating password...
               </span>
             ) : (

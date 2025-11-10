@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, EyeOff, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { X, Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
+import { LoadingLogo } from './LoadingLogo';
 import { useAuth } from '../contexts/AuthContext';
 import {
   validateEmail,
@@ -442,7 +443,7 @@ export function EnhancedAuthModal({ onClose }: AuthModalProps) {
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <LoadingLogo className="w-5 h-5" />
                 Please wait...
               </span>
             ) : mode === 'signin' ? (

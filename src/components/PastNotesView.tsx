@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, Archive, Paperclip, RotateCcw, Eye } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { LoadingLogo } from './LoadingLogo';
 
 const PASTEL_COLORS = [
   '#FEF3C7', '#DBEAFE', '#FCE7F3', '#E0E7FF', '#D1FAE5',
@@ -123,7 +124,7 @@ export function PastNotesView() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        <LoadingLogo className="w-12 h-12" />
       </div>
     );
   }

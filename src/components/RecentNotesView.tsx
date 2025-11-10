@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, MapPin, DollarSign, X, Download, Paperclip, Star, CheckCircle } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { LoadingLogo } from './LoadingLogo';
 
 const CATEGORY_COLORS: Record<string, string> = {
   design: '#E0E7FF',
@@ -196,7 +197,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <LoadingLogo className="w-12 h-12" />
       </div>
     );
   }

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Check, X, Clock, Shield, MapPin } from 'lucide-react';
 import { supabase, ConnectionRequest } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { LoadingLogo } from './LoadingLogo';
 
 type Tab = 'received' | 'sent';
 
@@ -118,7 +119,7 @@ export function RequestsView() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            <LoadingLogo className="w-10 h-10" />
           </div>
         ) : filteredRequests.length === 0 ? (
           <div className="text-center py-20">
