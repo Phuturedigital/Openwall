@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import { Navigation } from './components/Navigation';
 import { WallView } from './components/WallView';
-import { RequestsView } from './components/RequestsView';
+import { MyNotesView } from './components/MyNotesView';
 import { PaymentsView } from './components/PaymentsView';
 import { ProfileView } from './components/ProfileView';
 import { PastNotesView } from './components/PastNotesView';
@@ -20,6 +20,34 @@ function AppContent() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    const handleNoteFulfilled = () => {
+      setToastMessage('✅ Your note has been marked as fulfilled and moved to Past Notes.');
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        setCurrentView('past-notes');
+      }, 2000);
+    };
+
+    const handleNoteReposted = () => {
+      setToastMessage('Your note has been reposted successfully.');
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        setCurrentView('my-notes');
+      }, 2000);
+    };
+
+    window.addEventListener('note-fulfilled', handleNoteFulfilled);
+    window.addEventListener('note-reposted', handleNoteReposted);
+
+    return () => {
+      window.removeEventListener('note-fulfilled', handleNoteFulfilled);
+      window.removeEventListener('note-reposted', handleNoteReposted);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -38,7 +66,7 @@ function AppContent() {
   };
 
   const handleViewChange = (view: string) => {
-    if (!user && (view === 'requests' || view === 'payments' || view === 'profile' || view === 'past-notes')) {
+    if (!user && (view === 'my-notes' || view === 'payments' || view === 'profile' || view === 'past-notes')) {
       setShowAuthModal(true);
       return;
     }
@@ -50,25 +78,16 @@ function AppContent() {
     setToastMessage('Note posted successfully');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
-    setCurrentView('wall');
+    setCurrentView('my-notes');
     window.location.reload();
-  };
-
-  const handleNoteFullfilled = () => {
-    setToastMessage('Your note has been marked as fulfilled and moved to Past Notes.');
-    setShowToast(true);
-    setTimeout(() => {
-      setShowToast(false);
-      setCurrentView('past-notes');
-    }, 2000);
   };
 
   const renderView = () => {
     switch (currentView) {
       case 'wall':
         return <WallView />;
-      case 'requests':
-        return <RequestsView />;
+      case 'my-notes':
+        return <MyNotesView />;
       case 'payments':
         return <PaymentsView />;
       case 'profile':

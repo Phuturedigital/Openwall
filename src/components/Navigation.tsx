@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutGrid, Plus, Bell, CreditCard, User, Menu, X, Moon, Sun, Archive } from 'lucide-react';
+import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Archive } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,19 +41,30 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }:
 
   const navItems = [
     { id: 'wall', label: 'Wall', icon: LayoutGrid, ariaLabel: 'Go to Wall' },
-    { id: 'requests', label: 'Requests', icon: Bell, ariaLabel: 'View Requests' },
-    { id: 'payments', label: 'Payments', icon: CreditCard, ariaLabel: 'View Payments' },
-    { id: 'profile', label: 'Profile', icon: User, ariaLabel: 'Open Profile Menu' },
   ];
 
-  if (hasPastNotes && profile && (profile.user_type === 'client' || profile.user_type === 'hybrid')) {
-    navItems.splice(3, 0, {
-      id: 'past-notes',
-      label: 'Past Notes',
-      icon: Archive,
-      ariaLabel: 'View Past Notes (fulfilled)'
+  if (profile && (profile.user_type === 'client' || profile.user_type === 'hybrid')) {
+    navItems.push({
+      id: 'my-notes',
+      label: 'My Notes',
+      icon: FileText,
+      ariaLabel: 'View My Notes'
     });
+
+    if (hasPastNotes) {
+      navItems.push({
+        id: 'past-notes',
+        label: 'Past Notes',
+        icon: Archive,
+        ariaLabel: 'View Past Notes (fulfilled)'
+      });
+    }
   }
+
+  navItems.push(
+    { id: 'payments', label: 'Payments', icon: CreditCard, ariaLabel: 'View Payments' },
+    { id: 'profile', label: 'Profile', icon: User, ariaLabel: 'Open Profile Menu' }
+  );
 
   return (
     <nav role="navigation" className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 shadow-sm">

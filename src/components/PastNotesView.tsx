@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, Archive, Paperclip } from 'lucide-react';
+import { X, CheckCircle, Archive, Paperclip, RotateCcw, Eye } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -38,6 +38,8 @@ export function PastNotesView() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [repostingNote, setRepostingNote] = useState<Note | null>(null);
+  const [reposting, setReposting] = useState(false);
   const { profile } = useAuth();
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export function PastNotesView() {
       .from('notes')
       .select('*, profiles(*)')
       .eq('user_id', profile.id)
-      .in('status', ['fulfilled', 'deleted'])
+      .in('status', ['fulfilled', 'deleted', 'closed'])
       .order('updated_at', { ascending: false });
 
     if (!error && data) {
@@ -61,9 +63,61 @@ export function PastNotesView() {
     setLoading(false);
   }
 
+  async function handleRepost(note: Note) {
+    if (!profile || reposting) return;
+
+    setReposting(true);
+    try {
+      const { error } = await supabase.from('notes').insert({
+        user_id: profile.id,
+        body: note.body,
+        title: note.title,
+        budget: note.budget,
+        city: note.city,
+        contact: note.contact,
+        files: note.files,
+        prio: false,
+        status: 'open',
+        color: note.color || '#FEF3C7',
+      });
+
+      if (error) throw error;
+
+      setRepostingNote(null);
+
+      if (window.location) {
+        setTimeout(() => {
+          const event = new CustomEvent('note-reposted');
+          window.dispatchEvent(event);
+        }, 500);
+      }
+    } catch (err) {
+      console.error('Repost error:', err);
+    } finally {
+      setReposting(false);
+    }
+  }
+
   const formatBudget = (cents: number | null) => {
     if (!cents) return null;
     return `R${(cents / 100).toFixed(0)}`;
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === 'fulfilled') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">
+          <CheckCircle className="w-3 h-3" />
+          Fulfilled
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700/50 text-gray-700 dark:text-gray-400 text-xs font-medium rounded-full">
+        <Archive className="w-3 h-3" />
+        Closed
+      </span>
+    );
   };
 
   if (loading) {
@@ -93,7 +147,7 @@ export function PastNotesView() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div role="tabpanel" aria-label="Past Notes view" className="min-h-screen bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Past Notes</h1>
@@ -109,57 +163,83 @@ export function PastNotesView() {
             const isFulfilled = note.status === 'fulfilled';
 
             return (
-              <motion.div
+              <motion.article
                 key={note.id}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative p-5 rounded-2xl cursor-pointer transition-all hover:shadow-lg border border-gray-200/50 dark:border-gray-700 opacity-75"
-                style={{ backgroundColor: cardColor }}
-                onClick={() => setSelectedNote(note)}
+                className="relative p-5 rounded-2xl border border-gray-200/50 dark:border-gray-700 transition-all hover:shadow-lg"
+                style={{
+                  backgroundColor: cardColor,
+                  opacity: 0.85,
+                  filter: 'saturate(0.7)'
+                }}
+                aria-labelledby={`past-note-${note.id}`}
               >
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-medium mb-2">
-                    {isFulfilled ? (
-                      <>
-                        <CheckCircle className="w-3.5 h-3.5 text-green-700 dark:text-green-400" />
-                        <span className="text-green-700 dark:text-green-400">Fulfilled</span>
-                      </>
-                    ) : (
-                      <>
-                        <Archive className="w-3.5 h-3.5 text-gray-700 dark:text-gray-400" />
-                        <span className="text-gray-700 dark:text-gray-400">Archived</span>
-                      </>
-                    )}
+                  <div className="flex items-center justify-between mb-2">
+                    {getStatusBadge(note.status)}
                   </div>
 
-                  <p className="text-gray-900 dark:text-white text-sm leading-relaxed">
-                    {truncateText(note.body, 150)}
+                  <p id={`past-note-${note.id}`} className="text-gray-900 dark:text-white text-sm leading-relaxed">
+                    {truncateText(note.body, 100)}
                   </p>
 
-                  <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 flex-wrap">
+                  <div className="space-y-1">
                     {note.budget && (
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">
-                        {formatBudget(note.budget)}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Budget:</span>
+                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                          {formatBudget(note.budget)}
+                        </span>
+                      </div>
                     )}
 
-                    {note.city && (
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {note.city}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {isFulfilled ? 'Fulfilled:' : 'Closed:'}
                       </span>
-                    )}
-
-                    <span className="text-gray-500 dark:text-gray-500">
-                      {timeAgo(note.updated_at)}
-                    </span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        {timeAgo(note.updated_at)}
+                      </span>
+                    </div>
 
                     {hasAttachments && (
-                      <Paperclip className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <Paperclip className="w-3 h-3" />
+                        <span>{note.files.length} attachment{note.files.length !== 1 ? 's' : ''}</span>
+                      </div>
                     )}
                   </div>
+
+                  <div className="pt-3 flex gap-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedNote(note)}
+                      aria-label="View details"
+                      className="flex-1 py-2 px-3 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium transition-colors shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                      View
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRepostingNote(note);
+                      }}
+                      aria-label="Repost note"
+                      className="flex-1 py-2 px-3 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-medium transition-colors shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                      Repost
+                    </motion.button>
+                  </div>
                 </div>
-              </motion.div>
+              </motion.article>
             );
           })}
         </div>
@@ -285,6 +365,59 @@ export function PastNotesView() {
                     )}
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {repostingNote && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setRepostingNote(null)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                  <RotateCcw className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Repost Note?
+                </h3>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                This will create a new note with the same details. The original note will remain in Past Notes.
+              </p>
+              <div className="flex gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleRepost(repostingNote)}
+                  disabled={reposting}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <RotateCcw className="w-5 h-5" />
+                  {reposting ? 'Reposting...' : 'Repost Note'}
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setRepostingNote(null)}
+                  disabled={reposting}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
