@@ -18,6 +18,7 @@ import { EnhancedToast, ToastType } from './components/EnhancedToast';
 import { FloatingSearchBar } from './components/FloatingSearchBar';
 import { Footer } from './components/Footer';
 import { Router } from './components/Router';
+import { LoadingLogo } from './components/LoadingLogo';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -80,7 +81,7 @@ function AppContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+        <LoadingLogo className="w-16 h-16" />
       </div>
     );
   }
