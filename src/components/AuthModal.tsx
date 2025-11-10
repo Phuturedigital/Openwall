@@ -197,6 +197,18 @@ export function AuthModal({ onClose }: AuthModalProps) {
               </button>
             </p>
           )}
+
+          <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+            Powered by{' '}
+            <a
+              href="https://www.phuturedigital.co.za"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+            >
+              Phuture Digital
+            </a>
+          </p>
         </div>
       </motion.div>
     </motion.div>

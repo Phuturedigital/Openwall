@@ -210,6 +210,17 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               <p className="text-sm text-gray-500 dark:text-gray-500">
                 During beta, all features are free to use.
               </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                Powered by{' '}
+                <a
+                  href="https://www.phuturedigital.co.za"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
+                >
+                  Phuture Digital
+                </a>
+              </p>
             </div>
           </div>
         </motion.div>

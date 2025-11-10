@@ -15,6 +15,7 @@ import { MinimalPostModal } from './components/MinimalPostModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Toast } from './components/Toast';
 import { FloatingSearchBar } from './components/FloatingSearchBar';
+import { Footer } from './components/Footer';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -160,6 +161,8 @@ function AppContent() {
         show={showToast}
         onClose={() => setShowToast(false)}
       />
+
+      <Footer />
     </div>
   );
 }
