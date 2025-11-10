@@ -187,23 +187,56 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
   }
 
   async function handleRequestConnect() {
-    if (!profile || !selectedNote || requesting) return;
+    console.log('handleRequestConnect called', { profile, selectedNote, requesting });
+
+    if (!profile) {
+      setError('You must be logged in to send a request');
+      return;
+    }
+
+    if (!selectedNote) {
+      setError('No note selected');
+      return;
+    }
+
+    if (requesting) {
+      console.log('Already requesting, skipping');
+      return;
+    }
 
     setRequesting(true);
+    setError('');
+    console.log('Sending request to Supabase...');
+
     try {
-      const { error } = await supabase.from('connection_requests').insert({
+      const { data, error } = await supabase.from('connection_requests').insert({
         note_id: selectedNote.id,
         freelancer_id: profile.id,
         status: 'pending',
-      });
+      }).select().single();
 
-      if (error && error.code !== '23505') throw error;
+      console.log('Supabase response:', { data, error });
 
-      setRequestStatus('pending');
-    } catch (err) {
+      if (error) {
+        if (error.code === '23505') {
+          console.log('Duplicate request, setting status to pending');
+          setRequestStatus('pending');
+        } else if (error.message.includes('Daily request limit reached')) {
+          setError('You have reached your daily request limit. Try again tomorrow.');
+        } else {
+          console.error('Unexpected error:', error);
+          throw error;
+        }
+      } else {
+        console.log('Request successful, setting status to pending');
+        setRequestStatus('pending');
+      }
+    } catch (err: any) {
       console.error('Request error:', err);
+      setError(err.message || 'Failed to send request. Please try again.');
     } finally {
       setRequesting(false);
+      console.log('Request completed');
     }
   }
 
