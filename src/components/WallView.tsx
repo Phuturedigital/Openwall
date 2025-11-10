@@ -482,11 +482,11 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                       </div>
                     )}
                     {isMobile && (
-                      <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-2 mt-3">
                         {shouldShowReadMore(note.body) && (
                           <button
                             onClick={(e) => toggleNoteExpansion(note.id, e)}
-                            className="text-blue-600 dark:text-blue-500 text-sm font-medium hover:underline transition-colors"
+                            className="flex-1 px-4 py-2.5 bg-white/60 dark:bg-white/40 hover:bg-white/80 dark:hover:bg-white/60 text-gray-900 dark:text-gray-900 text-sm font-semibold rounded-lg transition-all shadow-sm border border-gray-200/50 dark:border-gray-700/30"
                             aria-expanded={isNoteExpanded(note.id)}
                           >
                             {isNoteExpanded(note.id) ? 'Show less' : 'Read more'}
@@ -498,7 +498,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                               e.stopPropagation();
                               handleRequestConnect(note);
                             }}
-                            className="text-green-600 dark:text-green-500 text-sm font-medium hover:underline transition-colors"
+                            className={`${shouldShowReadMore(note.body) ? 'flex-1' : 'w-full'} px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all shadow-md`}
                           >
                             Connect
                           </button>
