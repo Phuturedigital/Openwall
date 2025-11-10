@@ -75,8 +75,20 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
 
   const handleSubmit = async (e: React.FormEvent, postType: 'free' | 'priority') => {
     e.preventDefault();
+
     if (!profile || !body.trim()) {
-      setError('Please fill in all required fields');
+      setError('Please describe what you need');
+      return;
+    }
+
+    if (!budget || !budget.trim()) {
+      setError('Budget is required');
+      return;
+    }
+
+    const emailToUse = email.trim() || profile.email;
+    if (!emailToUse) {
+      setError('Email is required');
       return;
     }
 
@@ -86,18 +98,24 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
     try {
       const attachments = await uploadFiles();
 
-      const budgetInCents = budget ? parseInt(budget.replace(/\D/g, '')) * 100 : null;
+      const budgetInCents = parseInt(budget.replace(/\D/g, '')) * 100;
+
+      if (isNaN(budgetInCents) || budgetInCents <= 0) {
+        setError('Please enter a valid budget amount');
+        setLoading(false);
+        return;
+      }
 
       const contactInfo = {
-        email: email || profile.email,
-        phone: phone || profile.phone || undefined,
+        email: emailToUse,
+        phone: phone.trim() || profile.phone || undefined,
       };
 
       const { error: insertError } = await supabase.from('notes').insert({
         user_id: profile.id,
         body: body.trim(),
         budget: budgetInCents,
-        city: city || null,
+        city: city.trim() || null,
         contact: contactInfo,
         files: attachments,
         prio: postType === 'priority',
@@ -182,13 +200,13 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Budget
+                  Budget (Rands) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={budget}
                   onChange={(e) => setBudget(e.target.value)}
-                  placeholder="e.g., R2000"
+                  placeholder="e.g., 2000"
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
@@ -210,7 +228,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -276,7 +294,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => handleSubmit(e, 'free')}
-                disabled={loading || !body.trim()}
+                disabled={loading}
                 className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Posting...' : 'Post Free'}
@@ -287,7 +305,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => handleSubmit(e, 'priority')}
-                disabled={loading || !body.trim()}
+                disabled={loading}
                 className="flex-1 py-4 bg-gradient-to-r from-[#635BFF] to-[#7C3AED] text-white rounded-xl font-semibold shadow-lg shadow-[#635BFF]/20 hover:shadow-[#635BFF]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Posting...' : 'Priority Post – R10'}
