@@ -98,7 +98,6 @@ function AppContent() {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
     setCurrentView('my-notes');
-    window.location.reload();
   };
 
   const handleOnboardingComplete = () => {
