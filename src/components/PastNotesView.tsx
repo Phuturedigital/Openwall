@@ -52,7 +52,7 @@ export function PastNotesView() {
     setLoading(true);
     const { data, error } = await supabase
       .from('notes')
-      .select('*, profiles(*)')
+      .select('*, profiles!notes_user_id_fkey(*)')
       .eq('user_id', profile.id)
       .in('status', ['fulfilled', 'deleted', 'closed'])
       .order('updated_at', { ascending: false });

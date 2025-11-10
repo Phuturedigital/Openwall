@@ -125,7 +125,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
 
     let query = supabase
       .from('notes')
-      .select('*, profiles(*)')
+      .select('*, profiles!notes_user_id_fkey(*)')
       .neq('status', 'deleted')
       .neq('status', 'fulfilled');
 

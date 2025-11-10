@@ -26,13 +26,13 @@ export function RequestsView() {
 
     const { data: received } = await supabase
       .from('connection_requests')
-      .select('*, notes(*, profiles(*)), profiles(*)')
+      .select('*, notes(*, profiles!notes_user_id_fkey(*)), profiles!connection_requests_freelancer_id_fkey(*)')
       .eq('notes.user_id', profile.id)
       .order('created_at', { ascending: false });
 
     const { data: sent } = await supabase
       .from('connection_requests')
-      .select('*, notes(*, profiles(*)), profiles(*)')
+      .select('*, notes(*, profiles!notes_user_id_fkey(*)), profiles!connection_requests_freelancer_id_fkey(*)')
       .eq('freelancer_id', profile.id)
       .order('created_at', { ascending: false });
 
