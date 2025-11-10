@@ -75,6 +75,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
 
   const handleSubmit = async (e: React.FormEvent, postType: 'free' | 'priority') => {
     e.preventDefault();
+    setError('');
 
     if (!profile || !body.trim()) {
       setError('Please describe what you need');
@@ -93,7 +94,6 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const attachments = await uploadFiles();
