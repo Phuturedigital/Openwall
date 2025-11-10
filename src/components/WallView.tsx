@@ -122,9 +122,14 @@ export function WallView() {
       .from('notes')
       .select('*, profiles(*)')
       .neq('status', 'deleted')
+      .neq('status', 'fulfilled')
       .order('prio', { ascending: false })
       .order('created_at', { ascending: false })
       .range(pageNum * NOTES_PER_PAGE, (pageNum + 1) * NOTES_PER_PAGE - 1);
+
+    if (error) {
+      console.error('Error loading notes:', error);
+    }
 
     if (!error && data) {
       setNotes((prev) => (pageNum === 0 ? data : [...prev, ...data]));
@@ -224,6 +229,12 @@ export function WallView() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {notes.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400 text-lg">No notes available right now</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Check back later for new opportunities</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {notes.map((note) => {
             const cardColor = getColorFromId(note.id);
