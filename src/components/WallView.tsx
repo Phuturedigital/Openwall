@@ -86,6 +86,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
   const [unlocked, setUnlocked] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
+  const [error, setError] = useState('');
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -116,9 +117,11 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
   useEffect(() => {
     if (selectedNote && profile) {
       checkStatus();
+      setError('');
     } else {
       setRequestStatus('none');
       setUnlocked(false);
+      setError('');
     }
   }, [selectedNote, profile]);
 
