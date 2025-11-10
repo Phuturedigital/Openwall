@@ -327,6 +327,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
 
             return (
               <motion.article
+                id={`note-${note.id}`}
                 key={note.id}
                 layout
                 initial={{ opacity: 0, y: 20 }}

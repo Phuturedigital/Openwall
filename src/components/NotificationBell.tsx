@@ -11,16 +11,22 @@ type Notification = {
   title: string;
   message: string;
   link: string | null;
+  note_id: string | null;
   read: boolean;
   created_at: string;
   read_at: string | null;
 };
 
-export function NotificationBell() {
+type NotificationBellProps = {
+  onViewChange?: (view: string) => void;
+};
+
+export function NotificationBell({ onViewChange }: NotificationBellProps = {}) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [toastNotification, setToastNotification] = useState<Notification | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,6 +47,8 @@ export function NotificationBell() {
         (payload) => {
           const newNotification = payload.new as Notification;
           setNotifications((prev) => [newNotification, ...prev]);
+          setToastNotification(newNotification);
+          setTimeout(() => setToastNotification(null), 5000);
         }
       )
       .on(
@@ -160,10 +168,52 @@ export function NotificationBell() {
     if (!notification.read) {
       await markAsRead(notification.id);
     }
-    if (notification.link) {
-      window.location.href = notification.link;
-    }
+
     setIsOpen(false);
+
+    if (notification.note_id) {
+      if (window.location.pathname === '/' || window.location.pathname === '/wall') {
+        const noteElement = document.getElementById(`note-${notification.note_id}`);
+        if (noteElement) {
+          noteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          noteElement.classList.add('note-highlight');
+          setTimeout(() => {
+            noteElement.classList.remove('note-highlight');
+          }, 2000);
+          return;
+        }
+      }
+
+      if (onViewChange) {
+        onViewChange('wall');
+        setTimeout(() => {
+          const noteElement = document.getElementById(`note-${notification.note_id}`);
+          if (noteElement) {
+            noteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            noteElement.classList.add('note-highlight');
+            setTimeout(() => {
+              noteElement.classList.remove('note-highlight');
+            }, 2000);
+          }
+        }, 300);
+      }
+    } else if (notification.link) {
+      if (notification.link.startsWith('/')) {
+        const view = notification.link.substring(1);
+        if (onViewChange) {
+          onViewChange(view || 'wall');
+        } else {
+          window.location.href = notification.link;
+        }
+      } else {
+        window.location.href = notification.link;
+      }
+    }
+  };
+
+  const handleToastClick = (notification: Notification) => {
+    setToastNotification(null);
+    handleNotificationClick(notification);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -328,6 +378,58 @@ export function NotificationBell() {
                 </button>
               </div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {toastNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, x: 20 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, y: -20, x: 20 }}
+            transition={{ duration: 0.3 }}
+            className="fixed top-20 right-4 z-50 max-w-sm"
+          >
+            <button
+              onClick={() => handleToastClick(toastNotification)}
+              className={`w-full p-4 rounded-xl shadow-2xl border cursor-pointer transition-all hover:scale-105 ${
+                toastNotification.type === 'request_approved'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                  : toastNotification.type === 'request_declined'
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                  : toastNotification.type === 'note_fulfilled'
+                  ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                  : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+              }`}
+            >
+              <div className="flex gap-3 items-start">
+                <div className={`flex-shrink-0 w-10 h-10 rounded-full ${getNotificationBgColor(toastNotification.type)} flex items-center justify-center`}>
+                  {getNotificationIcon(toastNotification.type)}
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+                    {toastNotification.title}
+                  </p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">
+                    {toastNotification.message}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Click to view
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setToastNotification(null);
+                  }}
+                  className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  aria-label="Dismiss notification"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

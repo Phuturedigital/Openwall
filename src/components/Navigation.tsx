@@ -93,7 +93,7 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
             {user ? (
               <>
                 <div className="hidden md:block">
-                  <NotificationBell />
+                  <NotificationBell onViewChange={onViewChange} />
                 </div>
 
                 <motion.button
