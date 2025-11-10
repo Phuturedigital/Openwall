@@ -22,8 +22,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!mounted) return;
+
+      if (error) {
+        console.error('Error getting session:', error);
+        setLoading(false);
+        return;
+      }
 
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -31,7 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setLoading(false);
       }
-    }).catch(() => {
+    }).catch((error) => {
+      console.error('Error in getSession:', error);
       if (mounted) {
         setLoading(false);
       }
