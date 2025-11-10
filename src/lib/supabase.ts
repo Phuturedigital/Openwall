@@ -51,6 +51,7 @@ export type Note = {
   title: string | null;
   budget: number | null;
   city: string | null;
+  category: string | null;
   files: FileAttachment[];
   contact: ContactInfo | null;
   prio: boolean;

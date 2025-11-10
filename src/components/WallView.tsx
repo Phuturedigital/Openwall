@@ -7,14 +7,43 @@ import { EditNoteModal } from './EditNoteModal';
 
 const NOTES_PER_PAGE = 24;
 
-const PASTEL_COLORS = [
-  '#FEF3C7', '#DBEAFE', '#FCE7F3', '#E0E7FF', '#D1FAE5',
-  '#FED7AA', '#E9D5FF', '#BFDBFE', '#F3E8FF', '#BAE6FD',
-];
+const CATEGORY_COLORS: Record<string, string> = {
+  design: '#E0E7FF',
+  writing: '#FEF3C7',
+  tech: '#DBEAFE',
+  marketing: '#FCE7F3',
+  development: '#D1FAE5',
+  consulting: '#FED7AA',
+  other: '#F3F4F6',
+};
 
-function getColorFromId(id: string): string {
-  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return PASTEL_COLORS[hash % PASTEL_COLORS.length];
+const CATEGORY_LABELS: Record<string, string> = {
+  design: 'Design',
+  writing: 'Writing',
+  tech: 'Tech',
+  marketing: 'Marketing',
+  development: 'Development',
+  consulting: 'Consulting',
+  other: 'General',
+};
+
+function getCategoryFromText(text: string): string {
+  const lowerText = text.toLowerCase();
+  if (lowerText.includes('design') || lowerText.includes('logo') || lowerText.includes('brand')) return 'design';
+  if (lowerText.includes('write') || lowerText.includes('content') || lowerText.includes('article')) return 'writing';
+  if (lowerText.includes('tech') || lowerText.includes('software') || lowerText.includes('app')) return 'tech';
+  if (lowerText.includes('market') || lowerText.includes('social') || lowerText.includes('ads')) return 'marketing';
+  if (lowerText.includes('develop') || lowerText.includes('code') || lowerText.includes('website')) return 'development';
+  if (lowerText.includes('consult') || lowerText.includes('advice') || lowerText.includes('strategy')) return 'consulting';
+  return 'other';
+}
+
+function getColorForCategory(category: string): string {
+  return CATEGORY_COLORS[category] || CATEGORY_COLORS.other;
+}
+
+function getCategoryLabel(category: string): string {
+  return CATEGORY_LABELS[category] || CATEGORY_LABELS.other;
 }
 
 function timeAgo(date: string): string {
@@ -28,9 +57,17 @@ function timeAgo(date: string): string {
   return `${days}d ago`;
 }
 
-function truncateText(text: string, maxLength: number = 150): string {
+function truncateText(text: string, maxLength: number = 80): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '…';
+}
+
+function getInitials(name: string): string {
+  const parts = name.split(' ');
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 type WallViewProps = {
@@ -246,35 +283,58 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
             <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Check back later for new opportunities</p>
           </div>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {notes.map((note) => {
-            const cardColor = getColorFromId(note.id);
+            const category = note.category || getCategoryFromText(note.body);
+            const cardColor = getColorForCategory(category);
+            const categoryLabel = getCategoryLabel(category);
             const hasAttachments = note.files && note.files.length > 0;
             const owner = isOwner(note);
+            const posterProfile = note.profiles as any;
+            const posterName = posterProfile?.full_name || 'Verified User';
+            const posterCity = posterProfile?.city || note.city;
 
             return (
-              <motion.div
+              <motion.article
                 key={note.id}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className={`relative p-5 rounded-2xl cursor-pointer transition-all hover:shadow-lg ${
-                  note.prio ? 'border-2' : 'border border-gray-200/50'
-                } dark:border-gray-700 ${note.status === 'fulfilled' ? 'opacity-75' : ''}`}
+                tabIndex={0}
+                role="article"
+                aria-label={`Note: ${note.title || truncateText(note.body, 50)}`}
+                className={`relative aspect-square min-w-[280px] max-w-[320px] w-full p-5 rounded-2xl cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md ${
+                  note.prio ? 'ring-2 ring-purple-500 ring-offset-2' : 'border border-gray-200'
+                } dark:border-gray-700 ${note.status === 'fulfilled' ? 'opacity-75' : ''} flex flex-col`}
                 style={{
                   backgroundColor: cardColor,
-                  borderColor: note.prio ? '#8B5CF6' : undefined,
+                  backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.15), rgba(0,0,0,0.05))',
+                }}
+                onClick={() => setSelectedNote(note)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedNote(note);
+                  }
                 }}
               >
+                {note.prio && (
+                  <div className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                    <span>⭐</span>
+                    <span>Featured</span>
+                  </div>
+                )}
+
                 {owner && (
-                  <div className="absolute top-3 right-3 flex gap-1">
+                  <div className="absolute top-3 right-3 flex gap-1.5 z-10">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingNote(note);
                       }}
-                      className="p-1.5 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors shadow-sm"
+                      aria-label="Edit note"
+                      className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <Edit2 className="w-3.5 h-3.5 text-gray-700 dark:text-gray-300" />
                     </button>
@@ -283,48 +343,72 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                         e.stopPropagation();
                         setDeletingNote(note);
                       }}
-                      className="p-1.5 bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors shadow-sm"
+                      aria-label="Delete note"
+                      className="p-1.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                     </button>
                   </div>
                 )}
 
-                <div className="space-y-3" onClick={() => setSelectedNote(note)}>
-                  {note.status === 'fulfilled' && (
-                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400 text-xs font-medium mb-2">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                      <span>Fulfilled</span>
-                    </div>
-                  )}
-
-                  <p className="text-gray-900 dark:text-white text-sm leading-relaxed">
-                    {truncateText(note.body, 150)}
-                  </p>
-
-                  <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 flex-wrap">
-                    {note.budget && (
-                      <span className="font-semibold text-gray-800 dark:text-gray-200">
-                        {formatBudget(note.budget)}
-                      </span>
-                    )}
-
-                    {note.city && (
-                      <span className="text-gray-600 dark:text-gray-400">
-                        {note.city}
-                      </span>
-                    )}
-
-                    <span className="text-gray-500 dark:text-gray-500">
-                      {timeAgo(note.created_at)}
+                <div className="flex flex-col flex-1">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-700 bg-white/50 dark:bg-black/20 px-2.5 py-1 rounded-lg">
+                      {categoryLabel}
                     </span>
-
-                    {hasAttachments && (
-                      <Paperclip className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                    {note.status === 'fulfilled' && (
+                      <div className="flex items-center gap-1 text-green-700 dark:text-green-600 text-xs font-medium bg-green-50 dark:bg-green-900/30 px-2 py-1 rounded-lg">
+                        <CheckCircle className="w-3 h-3" />
+                        <span>Done</span>
+                      </div>
                     )}
                   </div>
+
+                  <h3 className="text-gray-900 dark:text-gray-900 font-semibold text-lg mb-2 line-clamp-2 leading-tight">
+                    {note.title || truncateText(note.body, 60)}
+                  </h3>
+
+                  {note.budget && (
+                    <p className="text-gray-900 dark:text-gray-900 font-bold text-xl mb-2">
+                      {formatBudget(note.budget)}
+                    </p>
+                  )}
+
+                  {!note.title && (
+                    <p className="text-gray-700 dark:text-gray-800 text-sm leading-relaxed line-clamp-2 flex-1">
+                      {truncateText(note.body, 80)}
+                    </p>
+                  )}
+
+                  <div className="mt-auto pt-4 border-t border-gray-900/10 dark:border-gray-900/20">
+                    <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-800">
+                      {posterProfile?.full_name ? (
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-[10px] border-2 border-white shadow-sm">
+                          {getInitials(posterProfile.full_name)}
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-[10px] border-2 border-white shadow-sm">
+                          <span>✓</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-medium truncate">{posterName}</span>
+                          {posterCity && (
+                            <>
+                              <span className="text-gray-500">·</span>
+                              <span className="text-gray-600 dark:text-gray-700 truncate">{posterCity}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      {hasAttachments && (
+                        <Paperclip className="w-3.5 h-3.5 text-gray-500 dark:text-gray-600 flex-shrink-0" />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
+              </motion.article>
             );
           })}
         </div>
