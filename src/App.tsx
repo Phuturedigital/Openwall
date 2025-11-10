@@ -6,6 +6,7 @@ import { Navigation } from './components/Navigation';
 import { WallView } from './components/WallView';
 import { RecentNotesView } from './components/RecentNotesView';
 import { MyNotesView } from './components/MyNotesView';
+import { RequestsView } from './components/RequestsView';
 import { PaymentsView } from './components/PaymentsView';
 import { ProfileView } from './components/ProfileView';
 import { PastNotesView } from './components/PastNotesView';
@@ -77,7 +78,7 @@ function AppContent() {
   };
 
   const handleViewChange = (view: string) => {
-    if (!user && (view === 'my-notes' || view === 'payments' || view === 'profile')) {
+    if (!user && (view === 'my-notes' || view === 'requests' || view === 'payments' || view === 'profile')) {
       setShowAuthModal(true);
       return;
     }
@@ -108,6 +109,8 @@ function AppContent() {
         return <RecentNotesView />;
       case 'my-notes':
         return <MyNotesView />;
+      case 'requests':
+        return <RequestsView />;
       case 'payments':
         return <PaymentsView />;
       case 'profile':

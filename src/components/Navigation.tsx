@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Clock, Search } from 'lucide-react';
+import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Clock, Search, Inbox } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -58,6 +58,7 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, s
     }
 
     navItems.push(
+      { id: 'requests', label: 'Requests', icon: Inbox, ariaLabel: 'View Requests' },
       { id: 'payments', label: 'Payments', icon: CreditCard, ariaLabel: 'View Payments' },
       { id: 'profile', label: 'Profile', icon: User, ariaLabel: 'Open Profile Menu' }
     );
