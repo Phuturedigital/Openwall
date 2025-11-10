@@ -141,9 +141,9 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col"
       >
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-8 py-6 flex items-center justify-between">
+        <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-8 py-6 flex items-center justify-between rounded-t-3xl">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Post a Note</h2>
           <button
             onClick={onClose}
@@ -153,7 +153,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
           </button>
         </div>
 
-        <div className="p-8">
+        <div className="p-8 overflow-y-auto flex-1">
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
