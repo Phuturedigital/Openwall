@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
 import { logUserActivity, ActivityActions } from '../lib/activityLogger';
+import { sendWelcomeEmail } from '../lib/welcomeEmail';
 
 type AuthContextType = {
   user: User | null;
@@ -45,13 +46,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       (async () => {
         if (!mounted) return;
 
         setUser(session?.user ?? null);
         if (session?.user) {
           await loadProfile(session.user.id);
+
+          if (event === 'SIGNED_IN' && session.user.email_confirmed_at) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('display_name')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            await sendWelcomeEmail(
+              session.user.id,
+              session.user.email!,
+              profileData?.display_name
+            );
+          }
         } else {
           setProfile(null);
           setLoading(false);
