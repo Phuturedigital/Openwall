@@ -481,15 +481,17 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                         )}
                       </div>
                     )}
-                    {isMobile && shouldShowReadMore(note.body) && (
+                    {isMobile && (
                       <div className="flex items-center justify-between mt-3">
-                        <button
-                          onClick={(e) => toggleNoteExpansion(note.id, e)}
-                          className="text-blue-600 dark:text-blue-500 text-sm font-medium hover:underline transition-colors"
-                          aria-expanded={isNoteExpanded(note.id)}
-                        >
-                          {isNoteExpanded(note.id) ? 'Show less' : 'Read more'}
-                        </button>
+                        {shouldShowReadMore(note.body) && (
+                          <button
+                            onClick={(e) => toggleNoteExpansion(note.id, e)}
+                            className="text-blue-600 dark:text-blue-500 text-sm font-medium hover:underline transition-colors"
+                            aria-expanded={isNoteExpanded(note.id)}
+                          >
+                            {isNoteExpanded(note.id) ? 'Show less' : 'Read more'}
+                          </button>
+                        )}
                         {!owner && (
                           <button
                             onClick={(e) => {
