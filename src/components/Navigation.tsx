@@ -5,6 +5,7 @@ import { useDarkMode } from '../contexts/DarkModeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Logo } from './Logo';
 import { UserProfileDropdown } from './UserProfileDropdown';
+import { NotificationBell } from './NotificationBell';
 
 type NavigationProps = {
   currentView: string;
@@ -91,6 +92,10 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
 
             {user ? (
               <>
+                <div className="hidden md:block">
+                  <NotificationBell />
+                </div>
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
