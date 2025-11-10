@@ -84,15 +84,18 @@ export function ProfileView() {
       .update(updateData)
       .eq('id', profile.id);
 
+    setSaving(false);
+
     if (error) {
-      setMessage('Failed to update profile');
+      console.error('Profile update error:', error);
+      setMessage(`Failed to update profile: ${error.message}`);
+      setTimeout(() => setMessage(''), 5000);
     } else {
       setMessage('Profile updated successfully');
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     }
-
-    setSaving(false);
-    setTimeout(() => setMessage(''), 3000);
   };
 
   const addSkill = (skill: string) => {
