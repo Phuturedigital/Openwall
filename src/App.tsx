@@ -11,6 +11,7 @@ import { PastNotesView } from './components/PastNotesView';
 import { AuthModal } from './components/AuthModal';
 import { MinimalPostModal } from './components/MinimalPostModal';
 import { WelcomeModal } from './components/WelcomeModal';
+import { OnboardingModal } from './components/OnboardingModal';
 import { Toast } from './components/Toast';
 
 function AppContent() {
@@ -20,6 +21,14 @@ function AppContent() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const onboarded = localStorage.getItem('onboarded');
+    if (!onboarded) {
+      setShowOnboarding(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleNoteFulfilled = () => {
@@ -82,6 +91,13 @@ function AppContent() {
     window.location.reload();
   };
 
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    setToastMessage('Welcome to Openwall – you\'re all set.');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'wall':
@@ -111,6 +127,8 @@ function AppContent() {
       {renderView()}
 
       <WelcomeModal />
+
+      {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
 
       <AnimatePresence>
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}

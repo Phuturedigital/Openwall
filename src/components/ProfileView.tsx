@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, MapPin, Phone, Mail, Building, Shield, Briefcase, Award, FileText, X } from 'lucide-react';
+import { User, MapPin, Phone, Mail, Building, Shield, Briefcase, Award, FileText, X, HelpCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -35,6 +35,7 @@ export function ProfileView() {
   const [message, setMessage] = useState('');
   const [skillInput, setSkillInput] = useState('');
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+  const [showGuideMessage, setShowGuideMessage] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -114,6 +115,13 @@ export function ProfileView() {
 
   const removeLookingFor = (item: string) => {
     setLookingFor(lookingFor.filter(i => i !== item));
+  };
+
+  const handleShowGuideAgain = () => {
+    localStorage.removeItem('onboarded');
+    setShowGuideMessage(true);
+    setTimeout(() => setShowGuideMessage(false), 3000);
+    setTimeout(() => window.location.reload(), 500);
   };
 
   if (!profile) {
@@ -484,6 +492,34 @@ export function ProfileView() {
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </motion.button>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm mt-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+            <HelpCircle className="w-5 h-5" />
+            Help & Support
+          </h3>
+
+          {showGuideMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-xl bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 mb-4"
+            >
+              Reloading to show the onboarding guide...
+            </motion.div>
+          )}
+
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Need a refresher on how Openwall works? View the onboarding guide again.
+          </p>
+
+          <button
+            onClick={handleShowGuideAgain}
+            className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+          >
+            Show Guide Again
+          </button>
         </div>
       </div>
     </div>
