@@ -8,22 +8,29 @@ type AuthModalProps = {
 };
 
 export function AuthModal({ onClose }: AuthModalProps) {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup' | 'reset'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
-      if (mode === 'signin') {
+      if (mode === 'reset') {
+        const { error } = await resetPassword(email);
+        if (error) throw error;
+        setSuccess('Password reset link sent! Check your email.');
+        setTimeout(() => setMode('signin'), 3000);
+      } else if (mode === 'signin') {
         const { error } = await signIn(email, password);
         if (error) throw error;
         onClose();
@@ -63,7 +70,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
         </button>
 
         <h2 className="text-3xl font-semibold mb-6 text-gray-900">
-          {mode === 'signin' ? 'Sign In' : 'Create Account'}
+          {mode === 'signin' ? 'Sign In' : mode === 'reset' ? 'Reset Password' : 'Create Account'}
         </h2>
 
         {error && (
@@ -73,6 +80,16 @@ export function AuthModal({ onClose }: AuthModalProps) {
             className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm"
           >
             {error}
+          </motion.div>
+        )}
+
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm"
+          >
+            {success}
           </motion.div>
         )}
 
@@ -111,19 +128,21 @@ export function AuthModal({ onClose }: AuthModalProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-stripe-border rounded-xl focus:outline-none focus:ring-2 focus:ring-stripe-primary/20 focus:border-stripe-primary transition-all"
-              required
-              minLength={6}
-            />
-          </div>
+          {mode !== 'reset' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-stripe-border rounded-xl focus:outline-none focus:ring-2 focus:ring-stripe-primary/20 focus:border-stripe-primary transition-all"
+                required
+                minLength={6}
+              />
+            </div>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -132,24 +151,44 @@ export function AuthModal({ onClose }: AuthModalProps) {
             disabled={loading}
             className="w-full bg-stripe-primary text-white py-3.5 px-4 rounded-xl hover:bg-stripe-hover disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg shadow-stripe-primary/20 transition-all"
           >
-            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
+            {loading ? 'Please wait...' : mode === 'signin' ? 'Sign In' : mode === 'reset' ? 'Send Reset Link' : 'Sign Up'}
           </motion.button>
         </form>
 
-        <div className="mt-6 text-center text-sm">
-          {mode === 'signin' ? (
-            <p className="text-gray-600">
-              Don't have an account?{' '}
+        <div className="mt-6 text-center text-sm space-y-2">
+          {mode === 'signin' && (
+            <>
               <button
-                onClick={() => setMode('signup')}
-                className="text-stripe-primary hover:text-stripe-hover font-semibold"
+                onClick={() => setMode('reset')}
+                className="text-gray-600 hover:text-stripe-primary font-medium block w-full"
               >
-                Sign up
+                Forgot password?
               </button>
-            </p>
-          ) : (
+              <p className="text-gray-600">
+                Don't have an account?{' '}
+                <button
+                  onClick={() => setMode('signup')}
+                  className="text-stripe-primary hover:text-stripe-hover font-semibold"
+                >
+                  Sign up
+                </button>
+              </p>
+            </>
+          )}
+          {mode === 'signup' && (
             <p className="text-gray-600">
               Already have an account?{' '}
+              <button
+                onClick={() => setMode('signin')}
+                className="text-stripe-primary hover:text-stripe-hover font-semibold"
+              >
+                Sign in
+              </button>
+            </p>
+          )}
+          {mode === 'reset' && (
+            <p className="text-gray-600">
+              Remember your password?{' '}
               <button
                 onClick={() => setMode('signin')}
                 className="text-stripe-primary hover:text-stripe-hover font-semibold"
