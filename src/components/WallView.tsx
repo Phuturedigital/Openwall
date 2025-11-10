@@ -77,9 +77,10 @@ function getInitials(name: string): string {
 
 type WallViewProps = {
   searchQuery?: string;
+  onSignInRequired?: () => void;
 };
 
-export function WallView({ searchQuery = '' }: WallViewProps) {
+export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -206,6 +207,9 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
 
     if (!profile) {
       console.error('You must be logged in to send a request');
+      if (onSignInRequired) {
+        onSignInRequired();
+      }
       return;
     }
 

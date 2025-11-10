@@ -120,7 +120,7 @@ function AppContent() {
   const renderView = () => {
     switch (currentView) {
       case 'wall':
-        return <WallView searchQuery={searchQuery} />;
+        return <WallView searchQuery={searchQuery} onSignInRequired={() => setShowAuthModal(true)} />;
       case 'recent-notes':
         return <RecentNotesView searchQuery={searchQuery} />;
       case 'my-notes':
@@ -136,7 +136,7 @@ function AppContent() {
       case 'settings':
         return <SettingsView />;
       default:
-        return <WallView searchQuery={searchQuery} />;
+        return <WallView searchQuery={searchQuery} onSignInRequired={() => setShowAuthModal(true)} />;
     }
   };
 
