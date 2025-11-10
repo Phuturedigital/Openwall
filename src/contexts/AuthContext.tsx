@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, Profile } from '../lib/supabase';
+import { logUserActivity, ActivityActions } from '../lib/activityLogger';
 
 type AuthContextType = {
   user: User | null;
@@ -100,6 +101,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError) throw profileError;
 
+      await logUserActivity(authData.user.id, ActivityActions.SIGN_UP);
+
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -108,12 +111,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+
+      if (data.user) {
+        await logUserActivity(data.user.id, ActivityActions.SIGN_IN);
+      }
+
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -121,6 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (user) {
+      await logUserActivity(user.id, ActivityActions.SIGN_OUT);
+    }
     await supabase.auth.signOut();
     setProfile(null);
   };

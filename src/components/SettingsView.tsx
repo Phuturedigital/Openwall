@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Shield, User, Mail, Eye, EyeOff, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { logUserActivity, ActivityActions } from '../lib/activityLogger';
 
 export function SettingsView() {
   const { profile } = useAuth();
@@ -13,6 +14,11 @@ export function SettingsView() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const [newEmail, setNewEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailSuccess, setEmailSuccess] = useState(false);
 
   const validatePassword = (password: string): string | null => {
     if (password.length < 8) {
@@ -62,7 +68,7 @@ export function SettingsView() {
     setSaving(true);
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { data, error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
 
@@ -70,6 +76,10 @@ export function SettingsView() {
         setError(updateError.message);
         setSaving(false);
         return;
+      }
+
+      if (data.user) {
+        await logUserActivity(data.user.id, ActivityActions.PASSWORD_CHANGED);
       }
 
       setSuccess(true);
@@ -80,6 +90,49 @@ export function SettingsView() {
       setError('An unexpected error occurred');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEmailChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailError('');
+    setEmailSuccess(false);
+
+    if (!newEmail || newEmail === profile?.email) {
+      setEmailError('Please enter a different email address');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    setSavingEmail(true);
+
+    try {
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        email: newEmail,
+      });
+
+      if (updateError) {
+        setEmailError(updateError.message);
+        setSavingEmail(false);
+        return;
+      }
+
+      if (data.user) {
+        await logUserActivity(data.user.id, ActivityActions.EMAIL_CHANGE_REQUESTED);
+      }
+
+      setEmailSuccess(true);
+      setNewEmail('');
+      setTimeout(() => setEmailSuccess(false), 10000);
+    } catch (err) {
+      setEmailError('An unexpected error occurred');
+    } finally {
+      setSavingEmail(false);
     }
   };
 
@@ -121,6 +174,87 @@ export function SettingsView() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                <Mail className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Change Email Address</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Update your email address</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleEmailChange} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Current Email
+                </label>
+                <input
+                  type="email"
+                  value={profile.email}
+                  disabled
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  New Email Address
+                </label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                  placeholder="newemail@example.com"
+                  required
+                />
+              </div>
+
+              <AnimatePresence>
+                {emailError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="p-4 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm"
+                  >
+                    {emailError}
+                  </motion.div>
+                )}
+
+                {emailSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="p-4 bg-blue-100 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl text-blue-700 dark:text-blue-300 text-sm"
+                  >
+                    <div className="flex items-start gap-2">
+                      <Check className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold mb-1">Verification email sent!</p>
+                        <p>Check your inbox at <strong>{newEmail || 'your new email'}</strong> and click the confirmation link to complete the email change.</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={savingEmail || emailSuccess || !newEmail}
+                className="w-full py-3 bg-purple-600 text-white rounded-xl font-semibold shadow-lg shadow-purple-600/20 hover:shadow-purple-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                aria-label="Update email address"
+              >
+                {savingEmail ? 'Sending Verification...' : emailSuccess ? 'Verification Sent!' : 'Update Email Address'}
+              </motion.button>
+            </form>
           </div>
 
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm">

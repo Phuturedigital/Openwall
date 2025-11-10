@@ -459,7 +459,11 @@ export function EnhancedAuthModal({ onClose }: AuthModalProps) {
           {mode === 'signin' && (
             <>
               <button
-                onClick={() => setMode('reset')}
+                onClick={() => {
+                  onClose();
+                  window.history.pushState({}, '', '/forgot-password');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }}
                 className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium block w-full hover:underline transition-colors cursor-pointer"
               >
                 Forgot password?

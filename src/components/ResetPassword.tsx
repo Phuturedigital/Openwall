@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Check, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { logUserActivity, ActivityActions } from '../lib/activityLogger';
 import {
   validatePassword,
   validatePasswordMatch,
@@ -62,11 +63,15 @@ export function ResetPassword() {
     setLoading(true);
 
     try {
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { data, error: updateError } = await supabase.auth.updateUser({
         password: password,
       });
 
       if (updateError) throw updateError;
+
+      if (data.user) {
+        await logUserActivity(data.user.id, ActivityActions.PASSWORD_RESET_COMPLETED);
+      }
 
       setSuccess(true);
       setTimeout(() => {

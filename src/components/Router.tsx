@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ResetPassword } from './ResetPassword';
 import { EmailVerified } from './EmailVerified';
+import { ForgotPassword } from './ForgotPassword';
 
-type Route = 'app' | 'reset-password' | 'email-verified';
+type Route = 'app' | 'reset-password' | 'email-verified' | 'forgot-password';
 
 export function Router({ children }: { children: React.ReactNode }) {
   const [route, setRoute] = useState<Route>('app');
@@ -15,6 +16,8 @@ export function Router({ children }: { children: React.ReactNode }) {
       setRoute('reset-password');
     } else if (path === '/email-verified' || hash.includes('type=email')) {
       setRoute('email-verified');
+    } else if (path === '/forgot-password') {
+      setRoute('forgot-password');
     } else {
       setRoute('app');
     }
@@ -27,6 +30,8 @@ export function Router({ children }: { children: React.ReactNode }) {
         setRoute('reset-password');
       } else if (newPath === '/email-verified' || newHash.includes('type=email')) {
         setRoute('email-verified');
+      } else if (newPath === '/forgot-password') {
+        setRoute('forgot-password');
       } else {
         setRoute('app');
       }
@@ -42,6 +47,10 @@ export function Router({ children }: { children: React.ReactNode }) {
 
   if (route === 'email-verified') {
     return <EmailVerified />;
+  }
+
+  if (route === 'forgot-password') {
+    return <ForgotPassword />;
   }
 
   return <>{children}</>;
