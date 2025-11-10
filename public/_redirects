@@ -1,0 +1,4 @@
+# SPA Routing - Redirect all requests to index.html
+# This ensures that routes like /reset-password work properly
+
+/* /index.html 200
