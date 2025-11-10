@@ -36,12 +36,12 @@ export function WelcomeModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ duration: 0.3, type: 'spring', stiffness: 300, damping: 30 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative">
-              <div className="h-2 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-t-2xl" />
+            <div className="flex-shrink-0 h-2 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 rounded-t-2xl" />
 
+            <div className="overflow-y-auto flex-1">
               <div className="p-8 md:p-10">
                 <div className="flex items-center gap-3 mb-6">
                   <Logo className="w-10 h-10 text-gray-900 dark:text-white" />
@@ -103,20 +103,20 @@ export function WelcomeModal() {
                 </motion.button>
               </div>
 
-              <div className="px-8 pb-6 text-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Powered by{' '}
-                  <a
-                    href="https://phuturedigital.co.za"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors"
-                  >
-                    Phuture Digital
-                  </a>{' '}
-                  · © 2025 All Rights Reserved
-                </p>
-              </div>
+                <div className="px-8 pb-6 text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Powered by{' '}
+                    <a
+                      href="https://phuturedigital.co.za"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors"
+                    >
+                      Phuture Digital
+                    </a>{' '}
+                    · © 2025 All Rights Reserved
+                  </p>
+                </div>
             </div>
           </motion.div>
         </motion.div>

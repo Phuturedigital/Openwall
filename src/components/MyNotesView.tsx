@@ -400,9 +400,9 @@ export function MyNotesView() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col"
             >
-              <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-8 py-6 flex items-center justify-between">
+              <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-8 py-6 flex items-center justify-between rounded-t-3xl">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Note Details</h3>
                 <button
                   onClick={() => setSelectedNote(null)}
@@ -412,7 +412,7 @@ export function MyNotesView() {
                 </button>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-6 overflow-y-auto flex-1">
                 <div className="flex items-center justify-between">
                   {getStatusBadge(selectedNote.status)}
                   {requestCounts[selectedNote.id] > 0 && (

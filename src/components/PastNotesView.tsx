@@ -259,10 +259,10 @@ export function PastNotesView() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
               style={{ width: '60%' }}
             >
-              <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-8 py-6 flex items-center justify-between">
+              <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-8 py-6 flex items-center justify-between rounded-t-3xl">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {selectedNote.status === 'fulfilled' ? 'Fulfilled Note' : 'Archived Note'}
                 </h3>
@@ -274,7 +274,7 @@ export function PastNotesView() {
                 </button>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-6 overflow-y-auto flex-1">
                 {selectedNote.status === 'fulfilled' && (
                   <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
                     <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
