@@ -92,8 +92,16 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
   const [requesting, setRequesting] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [isMobile, setIsMobile] = useState(false);
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setPage(0);
@@ -192,15 +200,16 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
     setLoading(false);
   }
 
-  async function handleRequestConnect() {
-    console.log('handleRequestConnect called', { profile, selectedNote, requesting });
+  async function handleRequestConnect(note?: Note) {
+    const targetNote = note || selectedNote;
+    console.log('handleRequestConnect called', { profile, targetNote, requesting });
 
     if (!profile) {
       console.error('You must be logged in to send a request');
       return;
     }
 
-    if (!selectedNote) {
+    if (!targetNote) {
       console.error('No note selected');
       return;
     }
@@ -215,7 +224,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
 
     try {
       const { data, error } = await supabase.from('connection_requests').insert({
-        note_id: selectedNote.id,
+        note_id: targetNote.id,
         freelancer_id: profile.id,
         status: 'pending',
       }).select().single();
@@ -225,19 +234,29 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
       if (error) {
         if (error.code === '23505') {
           console.log('Duplicate request, setting status to pending');
-          setRequestStatus('pending');
+          if (note) {
+            alert('You have already sent a connection request for this note.');
+          } else {
+            setRequestStatus('pending');
+          }
         } else if (error.message.includes('Daily request limit reached')) {
           console.error('Daily request limit reached');
+          alert('You have reached your daily request limit. Please try again tomorrow.');
         } else {
           console.error('Unexpected error:', error);
           throw error;
         }
       } else {
         console.log('Request successful, setting status to pending');
-        setRequestStatus('pending');
+        if (note) {
+          alert('Connection request sent successfully!');
+        } else {
+          setRequestStatus('pending');
+        }
       }
     } catch (err: any) {
       console.error('Request error:', err);
+      alert('Failed to send connection request. Please try again.');
     } finally {
       setRequesting(false);
       console.log('Request completed');
@@ -306,6 +325,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
 
   const toggleNoteExpansion = (noteId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isMobile) return;
     setExpandedNotes((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(noteId)) {
@@ -357,15 +377,21 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                 tabIndex={0}
                 role="article"
                 aria-label={`Note: ${note.title || truncateText(note.body, 50)}`}
-                className={`relative min-w-[280px] max-w-[320px] w-full p-5 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
-                  isNoteExpanded(note.id) ? 'min-h-[320px]' : 'aspect-square'
+                className={`relative min-w-[280px] max-w-[320px] w-full p-5 rounded-2xl transition-all duration-300 flex flex-col ${
+                  isMobile ? '' : 'cursor-pointer hover:scale-[1.02] hover:shadow-md'
+                } ${
+                  isMobile && isNoteExpanded(note.id) ? 'min-h-[320px]' : !isMobile ? 'aspect-square' : 'aspect-square'
                 } ${note.prio ? 'ring-2 ring-purple-500 ring-offset-2' : 'border border-gray-200'
-                } dark:border-gray-700 ${note.status === 'fulfilled' ? 'opacity-75' : ''} flex flex-col`}
+                } dark:border-gray-700 ${note.status === 'fulfilled' ? 'opacity-75' : ''}`}
                 style={{
                   backgroundColor: cardColor,
                   backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.15), rgba(0,0,0,0.05))',
                 }}
-                onClick={() => setSelectedNote(note)}
+                onClick={() => {
+                  if (!isMobile) {
+                    setSelectedNote(note);
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -455,14 +481,27 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                         )}
                       </div>
                     )}
-                    {shouldShowReadMore(note.body) && (
-                      <button
-                        onClick={(e) => toggleNoteExpansion(note.id, e)}
-                        className="text-blue-600 dark:text-blue-500 text-xs font-medium mt-2 hover:underline self-start transition-colors touch-target-min"
-                        aria-expanded={isNoteExpanded(note.id)}
-                      >
-                        {isNoteExpanded(note.id) ? 'Show less' : 'Read more'}
-                      </button>
+                    {isMobile && shouldShowReadMore(note.body) && (
+                      <div className="flex items-center justify-between mt-3">
+                        <button
+                          onClick={(e) => toggleNoteExpansion(note.id, e)}
+                          className="text-blue-600 dark:text-blue-500 text-sm font-medium hover:underline transition-colors"
+                          aria-expanded={isNoteExpanded(note.id)}
+                        >
+                          {isNoteExpanded(note.id) ? 'Show less' : 'Read more'}
+                        </button>
+                        {!owner && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRequestConnect(note);
+                            }}
+                            className="text-green-600 dark:text-green-500 text-sm font-medium hover:underline transition-colors"
+                          >
+                            Connect
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
 
