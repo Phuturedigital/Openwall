@@ -10,9 +10,10 @@ type NavigationProps = {
   onViewChange: (view: string) => void;
   onPostClick: () => void;
   onSignIn: () => void;
+  onLogout?: () => void;
 };
 
-export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }: NavigationProps) {
+export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, onLogout }: NavigationProps) {
   const { user, profile, signOut } = useAuth();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -112,8 +113,12 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }:
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={signOut}
-                  className="hidden md:block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium transition-colors"
+                  onClick={async () => {
+                    await signOut();
+                    if (onLogout) onLogout();
+                  }}
+                  className="hidden md:block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium transition-colors cursor-pointer"
+                  aria-label="Sign out"
                 >
                   Sign Out
                 </motion.button>
@@ -185,11 +190,13 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }:
                   </button>
 
                   <button
-                    onClick={() => {
-                      signOut();
+                    onClick={async () => {
+                      await signOut();
                       setMobileMenuOpen(false);
+                      if (onLogout) onLogout();
                     }}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium cursor-pointer"
+                    aria-label="Sign out"
                   >
                     <span>Sign Out</span>
                   </button>

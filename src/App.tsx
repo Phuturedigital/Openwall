@@ -10,12 +10,13 @@ import { RequestsView } from './components/RequestsView';
 import { PaymentsView } from './components/PaymentsView';
 import { ProfileView } from './components/ProfileView';
 import { PastNotesView } from './components/PastNotesView';
-import { AuthModal } from './components/AuthModal';
+import { EnhancedAuthModal } from './components/EnhancedAuthModal';
 import { MinimalPostModal } from './components/MinimalPostModal';
 import { OnboardingModal } from './components/OnboardingModal';
-import { Toast } from './components/Toast';
+import { EnhancedToast, ToastType } from './components/EnhancedToast';
 import { FloatingSearchBar } from './components/FloatingSearchBar';
 import { Footer } from './components/Footer';
+import { Router } from './components/Router';
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -24,6 +25,13 @@ function AppContent() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<ToastType>('success');
+
+  const showToastMessage = (message: string, type: ToastType = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -135,6 +143,7 @@ function AppContent() {
         onViewChange={handleViewChange}
         onPostClick={handlePostClick}
         onSignIn={() => setShowAuthModal(true)}
+        onLogout={() => showToastMessage('You\'ve been logged out safely.', 'info')}
       />
 
       {showSearchBar && <FloatingSearchBar onSearch={handleSearchChange} />}
@@ -144,7 +153,7 @@ function AppContent() {
       {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
 
       <AnimatePresence>
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        {showAuthModal && <EnhancedAuthModal onClose={() => setShowAuthModal(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>
@@ -156,8 +165,9 @@ function AppContent() {
         )}
       </AnimatePresence>
 
-      <Toast
+      <EnhancedToast
         message={toastMessage}
+        type={toastType}
         show={showToast}
         onClose={() => setShowToast(false)}
       />
@@ -171,7 +181,9 @@ function App() {
   return (
     <AuthProvider>
       <DarkModeProvider>
-        <AppContent />
+        <Router>
+          <AppContent />
+        </Router>
       </DarkModeProvider>
     </AuthProvider>
   );
