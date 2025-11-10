@@ -22,6 +22,7 @@ function AppContent() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const onboarded = localStorage.getItem('onboarded');
@@ -101,7 +102,7 @@ function AppContent() {
   const renderView = () => {
     switch (currentView) {
       case 'wall':
-        return <WallView />;
+        return <WallView searchQuery={searchQuery} />;
       case 'my-notes':
         return <MyNotesView />;
       case 'payments':
@@ -111,7 +112,7 @@ function AppContent() {
       case 'past-notes':
         return <PastNotesView />;
       default:
-        return <WallView />;
+        return <WallView searchQuery={searchQuery} />;
     }
   };
 
@@ -122,6 +123,8 @@ function AppContent() {
         onViewChange={handleViewChange}
         onPostClick={handlePostClick}
         onSignIn={() => setShowAuthModal(true)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       {renderView()}

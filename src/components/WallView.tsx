@@ -33,7 +33,11 @@ function truncateText(text: string, maxLength: number = 150): string {
   return text.slice(0, maxLength) + '…';
 }
 
-export function WallView() {
+type WallViewProps = {
+  searchQuery?: string;
+};
+
+export function WallView({ searchQuery = '' }: WallViewProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -49,8 +53,9 @@ export function WallView() {
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setPage(0);
     loadNotes(0);
-  }, []);
+  }, [searchQuery]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -118,11 +123,17 @@ export function WallView() {
   async function loadNotes(pageNum: number) {
     setLoading(true);
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('notes')
       .select('*, profiles(*)')
       .neq('status', 'deleted')
-      .neq('status', 'fulfilled')
+      .neq('status', 'fulfilled');
+
+    if (searchQuery.trim()) {
+      query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
+    }
+
+    const { data, error } = await query
       .order('prio', { ascending: false })
       .order('created_at', { ascending: false })
       .range(pageNum * NOTES_PER_PAGE, (pageNum + 1) * NOTES_PER_PAGE - 1);

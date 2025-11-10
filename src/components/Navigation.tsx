@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Archive } from 'lucide-react';
+import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Archive, Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,9 +11,11 @@ type NavigationProps = {
   onViewChange: (view: string) => void;
   onPostClick: () => void;
   onSignIn: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 };
 
-export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }: NavigationProps) {
+export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, searchQuery = '', onSearchChange }: NavigationProps) {
   const { user, profile, signOut } = useAuth();
   const { darkMode, toggleDarkMode } = useDarkMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -71,11 +73,26 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }:
     <nav role="navigation" className="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 shadow-sm">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-8 flex-1">
             <div className="flex items-center gap-3">
               <Logo className="w-8 h-8 text-gray-900 dark:text-white" />
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Openwall</h1>
             </div>
+
+            {currentView === 'wall' && onSearchChange && (
+              <div className="hidden md:flex flex-1 max-w-md mx-4">
+                <div className="relative w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    placeholder="Search notes..."
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="hidden md:flex items-center gap-1">
               {navItems.map((item) => {
@@ -173,6 +190,20 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn }:
             className="md:hidden py-4 border-t border-gray-100 dark:border-gray-800"
           >
             <div className="flex flex-col gap-2">
+              {currentView === 'wall' && onSearchChange && (
+                <div className="px-4 pb-2">
+                  <div className="relative w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => onSearchChange(e.target.value)}
+                      placeholder="Search notes..."
+                      className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    />
+                  </div>
+                </div>
+              )}
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentView === item.id;
