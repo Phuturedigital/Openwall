@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { LayoutGrid, Plus, FileText, CreditCard, User, Menu, X, Moon, Sun, Clock, Inbox } from 'lucide-react';
+import { LayoutGrid, Plus, CreditCard, Menu, X, Moon, Sun, Clock, Inbox } from 'lucide-react';
 import { useState } from 'react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Logo } from './Logo';
+import { UserProfileDropdown } from './UserProfileDropdown';
 
 type NavigationProps = {
   currentView: string;
@@ -25,19 +26,9 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
   ];
 
   if (profile) {
-    if (profile.user_type === 'client' || profile.user_type === 'hybrid') {
-      navItems.push({
-        id: 'my-notes',
-        label: 'My Notes',
-        icon: FileText,
-        ariaLabel: 'View My Notes'
-      });
-    }
-
     navItems.push(
       { id: 'requests', label: 'Requests', icon: Inbox, ariaLabel: 'View Requests' },
-      { id: 'payments', label: 'Payments', icon: CreditCard, ariaLabel: 'View Payments' },
-      { id: 'profile', label: 'Profile', icon: User, ariaLabel: 'Open Profile Menu' }
+      { id: 'payments', label: 'Payments', icon: CreditCard, ariaLabel: 'View Payments' }
     );
   }
 
@@ -110,27 +101,23 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
                   <span>Post a Note</span>
                 </motion.button>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={async () => {
-                    await signOut();
-                    if (onLogout) onLogout();
-                  }}
-                  className="hidden md:block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium transition-colors cursor-pointer"
-                  aria-label="Sign out"
-                >
-                  Sign Out
-                </motion.button>
+                <div className="hidden md:block">
+                  <UserProfileDropdown
+                    onViewChange={onViewChange}
+                    onSignOut={() => {
+                      if (onLogout) onLogout();
+                    }}
+                  />
+                </div>
               </>
             ) : (
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onSignIn}
-                className="hidden md:block px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
               >
-                Sign In
+                <span>Sign In / Create account</span>
               </motion.button>
             )}
 
@@ -176,18 +163,24 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
                 );
               })}
 
-              {user ? (
+              <button
+                onClick={() => {
+                  onPostClick();
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Post a Note</span>
+              </button>
+
+              {user && profile && (
                 <>
-                  <button
-                    onClick={() => {
-                      onPostClick();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium"
-                  >
-                    <Plus className="w-5 h-5" />
-                    <span>Post a Note</span>
-                  </button>
+                  <div className="border-t border-gray-200 dark:border-gray-700 my-2 pt-2">
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      Account
+                    </div>
+                  </div>
 
                   <button
                     onClick={async () => {
@@ -195,13 +188,15 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
                       setMobileMenuOpen(false);
                       if (onLogout) onLogout();
                     }}
-                    className="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg font-medium cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg font-medium cursor-pointer"
                     aria-label="Sign out"
                   >
-                    <span>Sign Out</span>
+                    <span>Log out</span>
                   </button>
                 </>
-              ) : (
+              )}
+
+              {!user && (
                 <button
                   onClick={() => {
                     onSignIn();
@@ -209,7 +204,7 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
                   }}
                   className="flex items-center gap-3 px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg font-medium"
                 >
-                  <span>Sign In</span>
+                  <span>Sign In / Create account</span>
                 </button>
               )}
             </div>
