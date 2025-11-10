@@ -62,6 +62,10 @@ function truncateText(text: string, maxLength: number = 80): string {
   return text.slice(0, maxLength) + '…';
 }
 
+function shouldShowReadMore(text: string): boolean {
+  return text.length > 150;
+}
+
 function getInitials(name: string): string {
   const parts = name.split(' ');
   if (parts.length >= 2) {
@@ -86,6 +90,7 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
   const [unlocked, setUnlocked] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -298,6 +303,21 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
     }
   }
 
+  const toggleNoteExpansion = (noteId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedNotes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(noteId)) {
+        newSet.delete(noteId);
+      } else {
+        newSet.add(noteId);
+      }
+      return newSet;
+    });
+  };
+
+  const isNoteExpanded = (noteId: string) => expandedNotes.has(noteId);
+
   const formatBudget = (cents: number | null) => {
     if (!cents) return null;
     return `R${(cents / 100).toFixed(0)}`;
@@ -336,8 +356,9 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                 tabIndex={0}
                 role="article"
                 aria-label={`Note: ${note.title || truncateText(note.body, 50)}`}
-                className={`relative aspect-square min-w-[280px] max-w-[320px] w-full p-5 rounded-2xl cursor-pointer transition-all hover:scale-[1.02] hover:shadow-md ${
-                  note.prio ? 'ring-2 ring-purple-500 ring-offset-2' : 'border border-gray-200'
+                className={`relative min-w-[280px] max-w-[320px] w-full p-5 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-md ${
+                  isNoteExpanded(note.id) ? 'min-h-[320px]' : 'aspect-square'
+                } ${note.prio ? 'ring-2 ring-purple-500 ring-offset-2' : 'border border-gray-200'
                 } dark:border-gray-700 ${note.status === 'fulfilled' ? 'opacity-75' : ''} flex flex-col`}
                 style={{
                   backgroundColor: cardColor,
@@ -406,11 +427,43 @@ export function WallView({ searchQuery = '' }: WallViewProps) {
                     </p>
                   )}
 
-                  {!note.title && (
-                    <p className="text-gray-700 dark:text-gray-800 text-sm leading-relaxed line-clamp-2 flex-1">
-                      {truncateText(note.body, 80)}
-                    </p>
-                  )}
+                  <div className="flex-1 flex flex-col">
+                    {note.title && (
+                      <div className="relative">
+                        <p className={`text-gray-700 dark:text-gray-800 text-sm leading-relaxed transition-all duration-300 ${
+                          isNoteExpanded(note.id) ? '' : 'line-clamp-2'
+                        }`}>
+                          {note.body}
+                        </p>
+                        {!isNoteExpanded(note.id) && shouldShowReadMore(note.body) && (
+                          <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[var(--card-bg)] to-transparent pointer-events-none"
+                               style={{ '--card-bg': cardColor } as React.CSSProperties} />
+                        )}
+                      </div>
+                    )}
+                    {!note.title && (
+                      <div className="relative">
+                        <p className={`text-gray-700 dark:text-gray-800 text-sm leading-relaxed transition-all duration-300 ${
+                          isNoteExpanded(note.id) ? '' : 'line-clamp-3'
+                        }`}>
+                          {note.body}
+                        </p>
+                        {!isNoteExpanded(note.id) && shouldShowReadMore(note.body) && (
+                          <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-[var(--card-bg)] to-transparent pointer-events-none"
+                               style={{ '--card-bg': cardColor } as React.CSSProperties} />
+                        )}
+                      </div>
+                    )}
+                    {shouldShowReadMore(note.body) && (
+                      <button
+                        onClick={(e) => toggleNoteExpansion(note.id, e)}
+                        className="text-blue-600 dark:text-blue-500 text-xs font-medium mt-2 hover:underline self-start transition-colors touch-target-min"
+                        aria-expanded={isNoteExpanded(note.id)}
+                      >
+                        {isNoteExpanded(note.id) ? 'Show less' : 'Read more'}
+                      </button>
+                    )}
+                  </div>
 
                   <div className="mt-auto pt-4 border-t border-gray-900/10 dark:border-gray-900/20">
                     <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-800">

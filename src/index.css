@@ -107,6 +107,14 @@
       box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
     }
   }
+
+  .touch-target-min {
+    min-height: 40px;
+    min-width: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
