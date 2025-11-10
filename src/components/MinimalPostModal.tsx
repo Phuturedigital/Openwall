@@ -9,6 +9,19 @@ type MinimalPostModalProps = {
   onSuccess: () => void;
 };
 
+function detectCategory(text: string): string {
+  const lowerText = text.toLowerCase();
+
+  if (lowerText.match(/logo|brand|design|graphic|ui|ux|figma|photoshop|illustrator/)) return 'design';
+  if (lowerText.match(/write|content|copy|blog|article|editor|proof/)) return 'writing';
+  if (lowerText.match(/code|develop|program|software|app|website|backend|frontend|full.?stack/)) return 'development';
+  if (lowerText.match(/tech|it|support|computer|network|system|server/)) return 'tech';
+  if (lowerText.match(/market|social.?media|seo|ads|campaign|brand|promotion/)) return 'marketing';
+  if (lowerText.match(/consult|advise|strategy|planning|business|coach/)) return 'consulting';
+
+  return 'other';
+}
+
 export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) {
   const { profile } = useAuth();
   const [body, setBody] = useState('');
@@ -111,6 +124,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         phone: phone.trim() || profile.phone || undefined,
       };
 
+      const category = detectCategory(body);
+
       const { error: insertError } = await supabase.from('notes').insert({
         user_id: profile.id,
         body: body.trim(),
@@ -120,6 +135,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         files: attachments,
         prio: postType === 'priority',
         color: '#FEF3C7',
+        category: category,
       });
 
       if (insertError) {
