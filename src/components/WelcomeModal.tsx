@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ExternalLink } from 'lucide-react';
+import { Logo } from './Logo';
 
 export function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,9 +44,7 @@ export function WelcomeModal() {
 
               <div className="p-8 md:p-10">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl">
-                    <Sparkles className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                  </div>
+                  <Logo className="w-10 h-10 text-gray-900 dark:text-white" />
                   <h2
                     id="welcome-title"
                     className="text-3xl font-bold text-gray-900 dark:text-white"

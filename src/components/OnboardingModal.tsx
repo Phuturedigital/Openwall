@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StickyNote, MessageCircle, CheckCircle2, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Logo } from './Logo';
 
 type OnboardingModalProps = {
   onComplete?: () => void;
@@ -120,6 +121,9 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             </button>
 
             <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <Logo className="w-10 h-10 text-gray-900 dark:text-white" />
+              </div>
               <h2 id="welcome-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Welcome to Openwall (Beta)
               </h2>
