@@ -11,20 +11,20 @@ const steps = [
   {
     number: 1,
     icon: StickyNote,
-    title: 'Post a Note',
-    description: 'Write what you need in a few clear lines. Add your budget and optional files for context.',
+    title: 'Browse or Post Notes',
+    description: 'Clients post what they need with their budget. Service providers browse opportunities and find work that matches their skills.',
   },
   {
     number: 2,
     icon: MessageCircle,
-    title: 'Receive Requests',
-    description: 'Freelancers will send requests to connect. Review them and choose who can unlock your contact information.',
+    title: 'Request to Connect',
+    description: 'Service providers send connection requests to show interest. Clients review requests and approve the best matches.',
   },
   {
     number: 3,
     icon: CheckCircle2,
-    title: 'Fulfil or Close',
-    description: 'When your need is met, mark it as fulfilled. It moves to Past Notes automatically so you can track your progress.',
+    title: 'Unlock & Collaborate',
+    description: 'A R15 unlock fee reveals contact details so both parties can connect directly. During beta, everything is free.',
   },
 ];
 
@@ -122,13 +122,13 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-4">
-                <Logo className="w-10 h-10 text-gray-900 dark:text-white" />
+                <Logo className="w-10 h-10 text-blue-600 dark:text-blue-400" />
               </div>
               <h2 id="welcome-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Welcome to Openwall (Beta)
+                Welcome to Openwall
               </h2>
               <p className="text-base text-gray-600 dark:text-gray-400">
-                A simple space where people post what they need and freelancers find real opportunities.
+                Connect clients with service providers, instantly and transparently.
               </p>
             </div>
 
