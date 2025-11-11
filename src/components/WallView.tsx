@@ -9,13 +9,13 @@ import { LoadingLogo } from './LoadingLogo';
 const NOTES_PER_PAGE = 24;
 
 const CATEGORY_COLORS: Record<string, string> = {
-  design: '#E0E7FF',
-  writing: '#FEF3C7',
-  tech: '#DBEAFE',
-  marketing: '#FCE7F3',
-  development: '#D1FAE5',
-  consulting: '#FED7AA',
-  other: '#F3F4F6',
+  design: '#FFFFFF',
+  writing: '#FFFFFF',
+  tech: '#FFFFFF',
+  marketing: '#FFFFFF',
+  development: '#FFFFFF',
+  consulting: '#FFFFFF',
+  other: '#FFFFFF',
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -351,7 +351,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   const isOwner = (note: Note) => profile && note.user_id === profile.id;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {notes.length === 0 && !loading && (
           <div className="text-center py-12">
@@ -381,15 +381,14 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                 tabIndex={0}
                 role="article"
                 aria-label={`Note: ${note.title || truncateText(note.body, 50)}`}
-                className={`relative min-w-[280px] max-w-[320px] w-full p-5 rounded-2xl transition-all duration-300 flex flex-col ${
-                  isMobile ? '' : 'cursor-pointer hover:scale-[1.02] hover:shadow-md'
+                className={`relative min-w-[280px] max-w-[320px] w-full p-5 rounded-2xl transition-all duration-300 flex flex-col bg-white dark:bg-black ${
+                  isMobile ? '' : 'cursor-pointer hover:scale-[1.02] hover:shadow-lg'
                 } ${
                   isMobile && isNoteExpanded(note.id) ? 'min-h-[320px]' : !isMobile ? 'aspect-square' : 'aspect-square'
-                } ${note.prio ? 'ring-2 ring-purple-500 ring-offset-2' : 'border border-gray-200'
-                } dark:border-gray-700 ${note.status === 'fulfilled' ? 'opacity-75' : ''}`}
+                } ${note.prio ? 'featured-gradient-outline shadow-lg' : 'border border-gray-200 dark:border-gray-800 shadow-sm'
+                } ${note.status === 'fulfilled' ? 'opacity-75' : ''}`}
                 style={{
                   backgroundColor: cardColor,
-                  backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.15), rgba(0,0,0,0.05))',
                 }}
                 onClick={() => {
                   if (!isMobile) {
@@ -404,7 +403,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                 }}
               >
                 {note.prio && (
-                  <div className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                  <div className="absolute -top-2 -right-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1 z-10">
                     <span>⭐</span>
                     <span>Featured</span>
                   </div>
@@ -437,7 +436,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
                 <div className="flex flex-col flex-1">
                   <div className="flex items-start justify-between mb-3">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-700 bg-white/50 dark:bg-black/20 px-2.5 py-1 rounded-lg">
+                    <span className="text-xs font-medium text-black dark:text-white bg-gray-100 dark:bg-gray-900 px-2.5 py-1 rounded-lg border border-gray-200 dark:border-gray-800">
                       {categoryLabel}
                     </span>
                     {note.status === 'fulfilled' && (
@@ -448,12 +447,12 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     )}
                   </div>
 
-                  <h3 className="text-gray-900 dark:text-gray-900 font-semibold text-lg mb-2 line-clamp-2 leading-tight">
+                  <h3 className="text-black dark:text-white font-semibold text-lg mb-2 line-clamp-2 leading-tight">
                     {note.title || truncateText(note.body, 60)}
                   </h3>
 
                   {note.budget && (
-                    <p className="text-gray-900 dark:text-gray-900 font-bold text-xl mb-2">
+                    <p className="text-black dark:text-white font-bold text-xl mb-2">
                       {formatBudget(note.budget)}
                     </p>
                   )}
@@ -461,7 +460,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                   <div className="flex-1 flex flex-col">
                     {note.title && (
                       <div className="relative">
-                        <p className={`text-gray-700 dark:text-gray-800 text-sm leading-relaxed transition-all duration-300 ${
+                        <p className={`text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-all duration-300 ${
                           isNoteExpanded(note.id) ? '' : 'line-clamp-2'
                         }`}>
                           {note.body}
@@ -474,7 +473,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     )}
                     {!note.title && (
                       <div className="relative">
-                        <p className={`text-gray-700 dark:text-gray-800 text-sm leading-relaxed transition-all duration-300 ${
+                        <p className={`text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-all duration-300 ${
                           isNoteExpanded(note.id) ? '' : 'line-clamp-3'
                         }`}>
                           {note.body}
@@ -490,7 +489,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                         {shouldShowReadMore(note.body) && (
                           <button
                             onClick={(e) => toggleNoteExpansion(note.id, e)}
-                            className="flex-1 px-4 py-2.5 bg-white/60 dark:bg-white/40 hover:bg-white/80 dark:hover:bg-white/60 text-gray-900 dark:text-gray-900 text-sm font-semibold rounded-lg transition-all shadow-sm border border-gray-200/50 dark:border-gray-700/30"
+                            className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-900 hover:bg-gray-200 dark:hover:bg-gray-800 text-black dark:text-white text-sm font-semibold rounded-lg transition-all shadow-sm border border-gray-200 dark:border-gray-800"
                             aria-expanded={isNoteExpanded(note.id)}
                           >
                             {isNoteExpanded(note.id) ? 'Show less' : 'Read more'}
@@ -511,14 +510,14 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     )}
                   </div>
 
-                  <div className="mt-auto pt-4 border-t border-gray-900/10 dark:border-gray-900/20">
-                    <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-800">
+                  <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                       {posterProfile?.full_name ? (
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-[10px] border-2 border-white shadow-sm">
+                        <div className="w-6 h-6 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-semibold text-[10px] shadow-sm">
                           {getInitials(posterProfile.full_name)}
                         </div>
                       ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-[10px] border-2 border-white shadow-sm">
+                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-[10px] shadow-sm">
                           <span>✓</span>
                         </div>
                       )}
@@ -528,7 +527,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                           {posterCity && (
                             <>
                               <span className="text-gray-500">·</span>
-                              <span className="text-gray-600 dark:text-gray-700 truncate">{posterCity}</span>
+                              <span className="text-gray-500 dark:text-gray-500 truncate">{posterCity}</span>
                             </>
                           )}
                         </div>
