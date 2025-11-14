@@ -10,6 +10,7 @@ type AuthContextType = {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
 };
@@ -52,6 +53,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(session?.user ?? null);
         if (session?.user) {
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (!existingProfile && session.user.email) {
+            const fullName = session.user.user_metadata?.full_name ||
+                            session.user.user_metadata?.name ||
+                            session.user.email.split('@')[0];
+
+            await supabase.from('profiles').insert({
+              id: session.user.id,
+              email: session.user.email,
+              full_name: fullName,
+            });
+
+            await logUserActivity(session.user.id, ActivityActions.SIGN_UP);
+          }
+
           await loadProfile(session.user.id);
 
           if (event === 'SIGNED_IN' && session.user.email_confirmed_at) {
@@ -143,6 +164,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   const signOut = async () => {
     if (user) {
       await logUserActivity(user.id, ActivityActions.SIGN_OUT);
@@ -169,7 +211,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signInWithGoogle, signOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
