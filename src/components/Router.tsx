@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { ResetPassword } from './ResetPassword';
 import { EmailVerified } from './EmailVerified';
 import { ForgotPassword } from './ForgotPassword';
+import { SurveyView } from './SurveyView';
+import { SurveyDashboardView } from './SurveyDashboardView';
 
-type Route = 'app' | 'reset-password' | 'email-verified' | 'forgot-password';
+type Route = 'app' | 'reset-password' | 'email-verified' | 'forgot-password' | 'survey' | 'survey-dashboard';
 
 export function Router({ children }: { children: React.ReactNode }) {
   const [route, setRoute] = useState<Route>('app');
@@ -18,6 +20,10 @@ export function Router({ children }: { children: React.ReactNode }) {
       setRoute('email-verified');
     } else if (path === '/forgot-password') {
       setRoute('forgot-password');
+    } else if (path === '/survey') {
+      setRoute('survey');
+    } else if (path === '/survey-dashboard') {
+      setRoute('survey-dashboard');
     } else {
       setRoute('app');
     }
@@ -32,6 +38,10 @@ export function Router({ children }: { children: React.ReactNode }) {
         setRoute('email-verified');
       } else if (newPath === '/forgot-password') {
         setRoute('forgot-password');
+      } else if (newPath === '/survey') {
+        setRoute('survey');
+      } else if (newPath === '/survey-dashboard') {
+        setRoute('survey-dashboard');
       } else {
         setRoute('app');
       }
@@ -51,6 +61,14 @@ export function Router({ children }: { children: React.ReactNode }) {
 
   if (route === 'forgot-password') {
     return <ForgotPassword />;
+  }
+
+  if (route === 'survey') {
+    return <SurveyView />;
+  }
+
+  if (route === 'survey-dashboard') {
+    return <SurveyDashboardView />;
   }
 
   return <>{children}</>;
