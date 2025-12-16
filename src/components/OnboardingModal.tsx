@@ -33,10 +33,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   const [step, setStep] = useState(1);
 
   useEffect(() => {
-    const onboarded = localStorage.getItem('onboarded');
-    if (!onboarded) {
-      setIsOpen(true);
-    }
+    setIsOpen(true);
   }, []);
 
   useEffect(() => {
@@ -71,7 +68,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   };
 
   const handleFinish = () => {
-    localStorage.setItem('onboarded', 'true');
     setIsOpen(false);
 
     if (onComplete) {
@@ -80,7 +76,6 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
   };
 
   const handleClose = () => {
-    localStorage.setItem('onboarded', 'true');
     setIsOpen(false);
   };
 
