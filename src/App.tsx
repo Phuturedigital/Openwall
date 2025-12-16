@@ -44,10 +44,7 @@ function AppContent() {
   const showSearchBar = currentView === 'wall' || currentView === 'recent-notes';
 
   useEffect(() => {
-    const onboarded = localStorage.getItem('onboarded');
-    if (!onboarded) {
-      setShowOnboarding(true);
-    }
+    setShowOnboarding(true);
   }, []);
 
   useEffect(() => {

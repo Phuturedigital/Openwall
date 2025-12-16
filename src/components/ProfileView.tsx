@@ -123,7 +123,6 @@ export function ProfileView() {
   };
 
   const handleShowGuideAgain = () => {
-    localStorage.removeItem('onboarded');
     setShowGuideMessage(true);
     setTimeout(() => setShowGuideMessage(false), 3000);
     setTimeout(() => window.location.reload(), 500);
