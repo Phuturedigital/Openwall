@@ -11,20 +11,20 @@ const steps = [
   {
     number: 1,
     icon: StickyNote,
-    title: 'Browse or Post Notes',
-    description: 'Clients post what they need with their budget. Service providers browse opportunities and find work that matches their skills.',
+    title: 'Find work or get help locally',
+    description: 'Openwall helps real people connect with real help nearby. No algorithms. No bidding. Just local requests and available skills.',
   },
   {
     number: 2,
     icon: MessageCircle,
-    title: 'Request to Connect',
-    description: 'Service providers send connection requests to show interest. Clients review requests and approve the best matches.',
+    title: 'Post or explore in one minute',
+    description: 'If you need help, post what you\'re looking for. If you offer a service, post what you can help with. You\'re always in control of who you connect with.',
   },
   {
     number: 3,
     icon: CheckCircle2,
-    title: 'Unlock & Collaborate',
-    description: 'A R15 unlock fee reveals contact details so both parties can connect directly. During beta, everything is free.',
+    title: 'Connect directly when it\'s a good match',
+    description: 'When both sides agree, you can unlock contact details and collaborate directly. During beta, everything is free to use.',
   },
 ];
 
@@ -122,7 +122,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-4">
-                <Logo className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                <Logo className="w-10 h-10 text-black dark:text-white" />
               </div>
               <h2 id="welcome-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 Welcome to Openwall
@@ -142,14 +142,14 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                 className="text-center py-8"
               >
                 <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                    <Icon className="w-10 h-10 text-white" strokeWidth={2} />
+                  <div className="w-20 h-20 rounded-full bg-black dark:bg-white flex items-center justify-center shadow-lg">
+                    <Icon className="w-10 h-10 text-white dark:text-black" strokeWidth={2} />
                   </div>
                 </div>
 
                 <div className="mb-2">
                   <span
-                    className="text-sm font-medium text-blue-600 dark:text-blue-400"
+                    className="text-sm font-medium text-black dark:text-white"
                     aria-label={`Step ${step} of 3`}
                   >
                     Step {step} of 3
@@ -173,9 +173,9 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                     key={s.number}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${
                       idx + 1 === step
-                        ? 'bg-blue-600 w-8'
+                        ? 'bg-black dark:bg-white w-8'
                         : idx + 1 < step
-                        ? 'bg-blue-400'
+                        ? 'bg-gray-500 dark:bg-gray-400'
                         : 'bg-gray-300 dark:bg-gray-600'
                     }`}
                     aria-label={`Step ${s.number}${idx + 1 === step ? ' (current)' : idx + 1 < step ? ' (completed)' : ''}`}
@@ -197,10 +197,10 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
                 <button
                   onClick={handleNext}
-                  aria-label={step === 3 ? 'Finish onboarding' : 'Next step'}
-                  className="px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg font-medium flex items-center gap-1"
+                  aria-label={step === 3 ? 'Post your first note' : 'Next step'}
+                  className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-md hover:shadow-lg font-medium flex items-center gap-1"
                 >
-                  {step === 3 ? 'Finish' : 'Next'}
+                  {step === 3 ? 'Post your first note' : 'Next'}
                   {step < 3 && <ChevronRight className="w-4 h-4" />}
                 </button>
               </div>
