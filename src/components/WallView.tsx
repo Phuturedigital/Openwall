@@ -218,10 +218,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
   async function handleRequestConnect(note?: Note) {
     const targetNote = note || selectedNote;
-    console.log('handleRequestConnect called', { profile, targetNote, requesting });
 
     if (!profile) {
-      console.error('You must be logged in to send a request');
       if (onSignInRequired) {
         onSignInRequired();
       }
@@ -229,56 +227,53 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     }
 
     if (!targetNote) {
-      console.error('No note selected');
+      alert('Please select a note first.');
       return;
     }
 
     if (requesting) {
-      console.log('Already requesting, skipping');
       return;
     }
 
     setRequesting(true);
-    console.log('Sending request to Supabase...');
 
     try {
       const { data, error } = await supabase.from('connection_requests').insert({
         note_id: targetNote.id,
         freelancer_id: profile.id,
         status: 'pending',
-      }).select().single();
-
-      console.log('Supabase response:', { data, error });
+      }).select().maybeSingle();
 
       if (error) {
         if (error.code === '23505') {
-          console.log('Duplicate request, setting status to pending');
           if (note) {
             alert('You have already sent a connection request for this note.');
           } else {
             setRequestStatus('pending');
+            alert('You have already sent a connection request for this note.');
           }
-        } else if (error.message.includes('Daily request limit reached')) {
-          console.error('Daily request limit reached');
-          alert('You have reached your daily request limit. Please try again tomorrow.');
+        } else if (error.message && error.message.includes('Daily request limit')) {
+          alert('You have reached your daily request limit (10 requests). Please try again tomorrow.');
+        } else if (error.message) {
+          alert(`Request failed: ${error.message}`);
         } else {
-          console.error('Unexpected error:', error);
-          throw error;
+          alert('Failed to send connection request. Please try again.');
         }
-      } else {
-        console.log('Request successful, setting status to pending');
+      } else if (data) {
         if (note) {
-          alert('Connection request sent successfully!');
+          alert('Connection request sent! The poster will be notified.');
         } else {
           setRequestStatus('pending');
+          alert('Connection request sent! The poster will be notified.');
         }
+      } else {
+        alert('Request processed. Please check your Requests page for status.');
       }
     } catch (err: any) {
-      console.error('Request error:', err);
-      alert('Failed to send connection request. Please try again.');
+      const errorMessage = err?.message || 'Unknown error occurred';
+      alert(`Failed to send connection request: ${errorMessage}`);
     } finally {
       setRequesting(false);
-      console.log('Request completed');
     }
   }
 
@@ -573,9 +568,10 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                               e.stopPropagation();
                               handleRequestConnect(note);
                             }}
-                            className={`${shouldShowReadMore(note.body) ? 'flex-1' : 'w-full'} px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all shadow-md`}
+                            disabled={requesting}
+                            className={`${shouldShowReadMore(note.body) ? 'flex-1' : 'w-full'} px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
-                            Connect
+                            {requesting ? 'Sending...' : 'Connect'}
                           </button>
                         )}
                       </div>
@@ -816,13 +812,13 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     </div>
                   ) : (
                     <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={requesting ? {} : { scale: 1.02 }}
+                      whileTap={requesting ? {} : { scale: 0.98 }}
                       onClick={handleRequestConnect}
                       disabled={requesting}
                       className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {requesting ? 'Sending...' : 'Request to Connect'}
+                      {requesting ? 'Sending Request...' : 'Request to Connect'}
                     </motion.button>
                   )}
                 </div>
