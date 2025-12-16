@@ -39,8 +39,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const isOfferingServices = profile?.intent === 'offer';
-  const isPostingRequest = profile?.intent === 'request';
+  const isOfferingServices = profile?.intent === 'offer_services';
+  const isPostingRequest = profile?.intent === 'post_request';
 
   useEffect(() => {
     if (profile?.city) {

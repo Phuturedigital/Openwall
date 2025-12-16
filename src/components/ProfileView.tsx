@@ -16,7 +16,7 @@ const SERVICE_SKILLS = [
 ];
 
 export function ProfileView() {
-  const { profile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [fullName, setFullName] = useState('');
   const [city, setCity] = useState('');
   const [area, setArea] = useState('');
@@ -60,11 +60,6 @@ export function ProfileView() {
 
   const handleSave = async () => {
     if (!profile) return;
-
-    if (!intent) {
-      setMessage('Please select how you want to use Openwall');
-      return;
-    }
 
     if (!fullName.trim()) {
       setMessage('Please enter your name');
@@ -145,10 +140,9 @@ export function ProfileView() {
       setMessage(`Failed to update profile: ${error.message}`);
       setTimeout(() => setMessage(''), 5000);
     } else {
+      await refreshProfile();
       setMessage('Profile updated successfully');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      setTimeout(() => setMessage(''), 3000);
     }
   };
 
@@ -223,7 +217,7 @@ export function ProfileView() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              How do you want to use Openwall? <span className="text-red-500">*</span>
+              How do you want to use Openwall?
             </label>
             <div className="flex gap-4">
               <button
