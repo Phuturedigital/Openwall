@@ -405,7 +405,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                         disabled={unlocking}
                         className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold shadow-lg shadow-green-600/20 hover:shadow-green-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {unlocking ? 'Processing...' : 'Pay R15 to Unlock Contact'}
+                        {unlocking ? 'Processing...' : 'Unlock Contact'}
                       </motion.button>
                     ) : requestStatus === 'declined' ? (
                       <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 text-center">

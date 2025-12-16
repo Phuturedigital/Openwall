@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
 
+const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
 const EXPERIENCE_OPTIONS = ['<1 year', '1-3 years', '3-5 years', '5+ years'];
 const INDUSTRY_OPTIONS = ['Tech', 'Design', 'Marketing', 'Finance', 'Education', 'Healthcare', 'Retail', 'Other'];
 const SKILL_OPTIONS = [
@@ -64,6 +65,11 @@ export function ProfileView() {
 
   const handleSave = async () => {
     if (!profile) return;
+
+    if (!city.trim()) {
+      setMessage('Please select a city');
+      return;
+    }
 
     setSaving(true);
     setMessage('');
@@ -243,14 +249,17 @@ export function ProfileView() {
                   City / Town <span className="text-red-500">*</span>
                 </div>
               </label>
-              <input
-                type="text"
+              <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 required
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
-                placeholder="Johannesburg, Cape Town, Durban..."
-              />
+              >
+                <option value="">Select city</option>
+                {MAJOR_CITIES.map((cityName) => (
+                  <option key={cityName} value={cityName}>{cityName}</option>
+                ))}
+              </select>
             </div>
 
             <div>

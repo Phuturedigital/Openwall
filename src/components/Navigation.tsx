@@ -28,8 +28,7 @@ export function Navigation({ currentView, onViewChange, onPostClick, onSignIn, o
 
   if (profile) {
     navItems.push(
-      { id: 'requests', label: 'Requests', icon: Inbox, ariaLabel: 'View Requests' },
-      { id: 'payments', label: 'Payments', icon: CreditCard, ariaLabel: 'View Payments' }
+      { id: 'requests', label: 'Requests', icon: Inbox, ariaLabel: 'View Requests' }
     );
   }
 

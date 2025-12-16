@@ -370,19 +370,25 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           {profile ? (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Showing creatives near you — {selectedCity || 'All Locations'}
               </h2>
-              <button
-                onClick={() => {
-                  const newCity = prompt('Enter city name:', selectedCity);
-                  if (newCity) setSelectedCity(newCity);
-                }}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Change location
-              </button>
+              <div className="flex flex-wrap gap-3">
+                {MAJOR_CITIES.map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => setSelectedCity(city)}
+                    className={`px-6 py-2 rounded-full font-medium transition-all ${
+                      selectedCity === city
+                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {city}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div>
@@ -794,7 +800,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                       disabled={unlocking}
                       className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold shadow-lg shadow-green-600/20 hover:shadow-green-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {unlocking ? 'Processing...' : 'Pay R15 to Unlock Contact'}
+                      {unlocking ? 'Processing...' : 'Unlock Contact'}
                     </motion.button>
                   ) : requestStatus === 'declined' ? (
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">

@@ -80,7 +80,7 @@ export function WelcomeModal() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-blue-600 dark:text-blue-400 font-bold">4.</span>
-                        <span><strong>R15 unlock fee</strong> reveals contact details to connect</span>
+                        <span><strong>Unlock contact details</strong> to connect directly</span>
                       </li>
                     </ul>
                   </div>

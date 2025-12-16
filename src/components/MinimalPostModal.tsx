@@ -9,6 +9,8 @@ type MinimalPostModalProps = {
   onSuccess: () => void;
 };
 
+const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
+
 function detectCategory(text: string): string {
   const lowerText = text.toLowerCase();
 
@@ -99,6 +101,11 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
 
     if (!budget || !budget.trim()) {
       setError('Budget is required');
+      return;
+    }
+
+    if (!city.trim()) {
+      setError('Please select a city');
       return;
     }
 
@@ -234,15 +241,19 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  City
+                  City <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g., Johannesburg"
+                  required
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
-                />
+                >
+                  <option value="">Select city</option>
+                  {MAJOR_CITIES.map((cityName) => (
+                    <option key={cityName} value={cityName}>{cityName}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -383,14 +394,14 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 onClick={(e) => handleSubmit(e, 'priority')}
                 disabled={loading}
                 className="flex-1 py-4 bg-gradient-to-r from-[#635BFF] to-[#7C3AED] text-white rounded-xl font-semibold shadow-lg shadow-[#635BFF]/20 hover:shadow-[#635BFF]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                aria-label="Post priority note for R10"
+                aria-label="Post priority note"
               >
-                {loading ? 'Posting...' : 'Priority Post – R10'}
+                {loading ? 'Posting...' : 'Priority Post'}
               </motion.button>
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-              Priority posts get a subtle gradient border and appear at the top for 48 hours
+              Priority posts get a gradient border and appear at the top. During beta, all features are free.
             </p>
           </form>
         </div>
