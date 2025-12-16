@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Upload } from 'lucide-react';
 import { supabase, FileAttachment } from '../lib/supabase';
@@ -26,7 +26,9 @@ function detectCategory(text: string): string {
 
 export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) {
   const { profile } = useAuth();
+  const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [serviceType, setServiceType] = useState('');
   const [budget, setBudget] = useState('');
   const [city, setCity] = useState('');
   const [area, setArea] = useState('');
@@ -36,6 +38,15 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const isOfferingServices = profile?.intent === 'offer';
+  const isPostingRequest = profile?.intent === 'request';
+
+  useEffect(() => {
+    if (profile?.city) {
+      setCity(profile.city);
+    }
+  }, [profile]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -94,14 +105,38 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
     e.preventDefault();
     setError('');
 
-    if (!profile || !body.trim()) {
-      setError('Please describe what you need');
+    if (!profile) {
+      setError('You must be logged in to post');
       return;
     }
 
-    if (!budget || !budget.trim()) {
-      setError('Budget is required');
-      return;
+    if (isOfferingServices) {
+      if (!title.trim()) {
+        setError('Please add a title or headline');
+        return;
+      }
+      if (!serviceType.trim()) {
+        setError('Please specify the services you offer');
+        return;
+      }
+    } else if (isPostingRequest) {
+      if (!body.trim()) {
+        setError('Please describe what help you need');
+        return;
+      }
+      if (!serviceType.trim()) {
+        setError('Please specify the type of service needed');
+        return;
+      }
+      if (!budget || !budget.trim()) {
+        setError('Budget is required');
+        return;
+      }
+    } else {
+      if (!body.trim()) {
+        setError('Please describe your need');
+        return;
+      }
     }
 
     if (!city.trim()) {
@@ -120,12 +155,14 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
     try {
       const attachments = await uploadFiles();
 
-      const budgetInCents = parseInt(budget.replace(/\D/g, '')) * 100;
-
-      if (isNaN(budgetInCents) || budgetInCents <= 0) {
-        setError('Please enter a valid budget amount');
-        setLoading(false);
-        return;
+      let budgetInCents = null;
+      if (budget && budget.trim()) {
+        budgetInCents = parseInt(budget.replace(/\D/g, '')) * 100;
+        if (isNaN(budgetInCents) || budgetInCents <= 0) {
+          setError('Please enter a valid budget amount');
+          setLoading(false);
+          return;
+        }
       }
 
       const contactInfo = {
@@ -133,12 +170,15 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         phone: phone.trim() || profile.phone || undefined,
       };
 
-      const category = detectCategory(body);
+      const contentForCategory = isOfferingServices
+        ? `${title} ${serviceType} ${body}`
+        : `${body} ${serviceType}`;
+      const category = detectCategory(contentForCategory);
 
-      const { error: insertError } = await supabase.from('notes').insert({
+      const noteData: any = {
         user_id: profile.id,
-        body: body.trim(),
-        budget: budgetInCents,
+        title: isOfferingServices ? title.trim() : null,
+        body: isOfferingServices ? (body.trim() || serviceType) : body.trim(),
         city: city.trim() || null,
         area: area.trim() || null,
         work_mode: workMode,
@@ -147,7 +187,13 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         prio: postType === 'priority',
         color: '#FEF3C7',
         category: category,
-      });
+      };
+
+      if (budgetInCents) {
+        noteData.budget = budgetInCents;
+      }
+
+      const { error: insertError } = await supabase.from('notes').insert(noteData);
 
       if (insertError) {
         console.error('Insert error details:', insertError);
@@ -211,43 +257,200 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
           )}
 
           <form className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                What do you need? <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Describe your need in detail..."
-                rows={6}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-pointer"
-                required
-              />
-            </div>
+            {isOfferingServices ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Title / Headline <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., Logo designer available for small businesses"
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                    required
+                  />
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Budget (Rands) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder="e.g., 2000"
-                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
-              />
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Services offered <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={serviceType}
+                    onChange={(e) => setServiceType(e.target.value)}
+                    placeholder="Describe what services you provide..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-pointer"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    How do you work? <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setWorkMode('on-site')}
+                      className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                        workMode === 'on-site'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      On-site
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWorkMode('remote')}
+                      className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                        workMode === 'remote'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Remote
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWorkMode('both')}
+                      className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                        workMode === 'both'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Both
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Optional description
+                  </label>
+                  <textarea
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="Add any additional details about your services..."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-pointer"
+                  />
+                </div>
+              </>
+            ) : isPostingRequest ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    What help do you need? <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="e.g., Looking for a photographer for an event"
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-pointer"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Type of service needed <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={serviceType}
+                    onChange={(e) => setServiceType(e.target.value)}
+                    placeholder="e.g., Photography, Web Design, Content Writing"
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Budget (Rands) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="e.g., 2000"
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Preferred work mode <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setWorkMode('on-site')}
+                      className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                        workMode === 'on-site'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      On-site
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWorkMode('remote')}
+                      className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                        workMode === 'remote'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Remote
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWorkMode('both')}
+                      className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                        workMode === 'both'
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      Either
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  What do you need? <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Describe your need in detail..."
+                  rows={6}
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 cursor-pointer"
+                  required
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  City <span className="text-red-500">*</span>
+                  City / Town <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 >
                   <option value="">Select city</option>
                   {MAJOR_CITIES.map((cityName) => (
@@ -265,49 +468,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
                   placeholder="e.g., Sandton"
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Work Mode <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setWorkMode('on-site')}
-                  className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
-                    workMode === 'on-site'
-                      ? 'bg-[#635BFF] text-white shadow-lg shadow-[#635BFF]/20'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  On-site
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWorkMode('remote')}
-                  className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
-                    workMode === 'remote'
-                      ? 'bg-[#635BFF] text-white shadow-lg shadow-[#635BFF]/20'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Remote
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setWorkMode('both')}
-                  className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
-                    workMode === 'both'
-                      ? 'bg-[#635BFF] text-white shadow-lg shadow-[#635BFF]/20'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  Both
-                </button>
               </div>
             </div>
 
@@ -321,7 +483,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={profile?.email || 'your@email.com'}
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
               </div>
 
@@ -334,7 +496,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+27 82 123 4567"
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
               </div>
             </div>
@@ -360,7 +522,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   </div>
                 ))}
 
-                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-[#635BFF] transition-colors cursor-pointer">
+                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 transition-colors cursor-pointer">
                   <Upload className="w-5 h-5 text-gray-400" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">Add files</span>
                   <input
@@ -384,7 +546,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 aria-label="Post note for free"
               >
-                {loading ? 'Posting...' : 'Post Free'}
+                {loading ? 'Posting...' : isOfferingServices ? 'Post availability' : 'Post request'}
               </motion.button>
 
               <motion.button
@@ -393,7 +555,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                 whileTap={{ scale: 0.98 }}
                 onClick={(e) => handleSubmit(e, 'priority')}
                 disabled={loading}
-                className="flex-1 py-4 bg-gradient-to-r from-[#635BFF] to-[#7C3AED] text-white rounded-xl font-semibold shadow-lg shadow-[#635BFF]/20 hover:shadow-[#635BFF]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 aria-label="Post priority note"
               >
                 {loading ? 'Posting...' : 'Priority Post'}
