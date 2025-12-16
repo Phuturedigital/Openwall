@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle } from 'lucide-react';
+import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle, MapPin } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
@@ -80,6 +80,8 @@ type WallViewProps = {
   onSignInRequired?: () => void;
 };
 
+const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
+
 export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +96,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   const [unlocking, setUnlocking] = useState(false);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedCity, setSelectedCity] = useState<string>('');
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -105,9 +108,17 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   }, []);
 
   useEffect(() => {
+    if (profile && profile.city) {
+      setSelectedCity(profile.city);
+    } else if (!profile) {
+      setSelectedCity(MAJOR_CITIES[0]);
+    }
+  }, [profile]);
+
+  useEffect(() => {
     setPage(0);
     loadNotes(0);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCity]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -180,6 +191,10 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       .select('*, profiles!notes_user_id_fkey(*)')
       .neq('status', 'deleted')
       .neq('status', 'fulfilled');
+
+    if (selectedCity) {
+      query = query.ilike('city', selectedCity);
+    }
 
     if (searchQuery.trim()) {
       query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
@@ -353,10 +368,61 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          {profile ? (
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Showing creatives near you — {selectedCity || 'All Locations'}
+              </h2>
+              <button
+                onClick={() => {
+                  const newCity = prompt('Enter city name:', selectedCity);
+                  if (newCity) setSelectedCity(newCity);
+                }}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Change location
+              </button>
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Browse by city
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                {MAJOR_CITIES.map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => setSelectedCity(city)}
+                    className={`px-6 py-2 rounded-full font-medium transition-all ${
+                      selectedCity === city
+                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {city}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {notes.length === 0 && !loading && (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400 text-lg">No notes available right now</p>
-            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Check back later for new opportunities</p>
+            <p className="text-gray-500 dark:text-gray-400 text-lg">No posts yet in this area.</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
+              {profile ? (
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent('open-post-modal'))}
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Be the first to post availability
+                </button>
+              ) : (
+                'Check back later or try a different city'
+              )}
+            </p>
           </div>
         )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -510,7 +576,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     )}
                   </div>
 
-                  <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800">
+                  <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
                     <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                       {posterProfile?.full_name ? (
                         <div className="w-6 h-6 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-semibold text-[10px] shadow-sm">
@@ -524,16 +590,26 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-medium truncate">{posterName}</span>
-                          {posterCity && (
-                            <>
-                              <span className="text-gray-500">·</span>
-                              <span className="text-gray-500 dark:text-gray-500 truncate">{posterCity}</span>
-                            </>
-                          )}
                         </div>
                       </div>
                       {hasAttachments && (
                         <Paperclip className="w-3.5 h-3.5 text-gray-500 dark:text-gray-600 flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {(note.city || note.area) && (
+                        <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                          <MapPin className="w-3 h-3" />
+                          <span>
+                            {note.city}
+                            {note.area && `, ${note.area}`}
+                          </span>
+                        </div>
+                      )}
+                      {note.work_mode && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">
+                          {note.work_mode === 'on-site' ? 'On-site' : note.work_mode === 'remote' ? 'Remote' : 'Both'}
+                        </span>
                       )}
                     </div>
                   </div>

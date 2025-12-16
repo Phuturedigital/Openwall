@@ -19,9 +19,12 @@ export function ProfileView() {
   const { profile } = useAuth();
   const [fullName, setFullName] = useState('');
   const [city, setCity] = useState('');
+  const [area, setArea] = useState('');
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
   const [role, setRole] = useState('freelancer');
+  const [workMode, setWorkMode] = useState('both');
+  const [discoveryPreference, setDiscoveryPreference] = useState('my_city');
 
   const [profession, setProfession] = useState('');
   const [skills, setSkills] = useState<string[]>([]);
@@ -43,9 +46,12 @@ export function ProfileView() {
     if (profile) {
       setFullName(profile.full_name || '');
       setCity(profile.city || '');
+      setArea(profile.area || '');
       setPhone(profile.phone || '');
       setCompany(profile.company || '');
       setRole(profile.role || 'freelancer');
+      setWorkMode(profile.work_mode || 'both');
+      setDiscoveryPreference(profile.discovery_preference || 'my_city');
       setProfession(profile.profession || '');
       setSkills(profile.skills || []);
       setBio(profile.bio || '');
@@ -65,9 +71,12 @@ export function ProfileView() {
     const updateData: any = {
       full_name: fullName,
       city: city,
+      area: area,
       phone: phone,
       company: company,
       role: role,
+      work_mode: workMode,
+      discovery_preference: discoveryPreference,
     };
 
     if (role === 'freelancer') {
@@ -231,32 +240,125 @@ export function ProfileView() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  City
+                  City / Town <span className="text-red-500">*</span>
                 </div>
               </label>
               <input
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
+                required
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
-                placeholder="Cape Town"
+                placeholder="Johannesburg, Cape Town, Durban..."
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4" />
-                  Company (Optional)
+                  <MapPin className="w-4 h-4" />
+                  Area / Suburb (Optional)
                 </div>
               </label>
               <input
                 type="text"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
-                placeholder="Acme Inc."
+                placeholder="Sandton, Newlands, Umhlanga..."
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="flex items-center gap-2">
+                <Building className="w-4 h-4" />
+                Company (Optional)
+              </div>
+            </label>
+            <input
+              type="text"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+              placeholder="Acme Inc."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              How do you work? <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => setWorkMode('on-site')}
+                className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                  workMode === 'on-site'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                On-site
+              </button>
+              <button
+                onClick={() => setWorkMode('remote')}
+                className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                  workMode === 'remote'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Remote
+              </button>
+              <button
+                onClick={() => setWorkMode('both')}
+                className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                  workMode === 'both'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Both
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Where do you want to be discovered? <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={() => setDiscoveryPreference('near_me')}
+                className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                  discoveryPreference === 'near_me'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Near me only
+              </button>
+              <button
+                onClick={() => setDiscoveryPreference('my_city')}
+                className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                  discoveryPreference === 'my_city'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                My city
+              </button>
+              <button
+                onClick={() => setDiscoveryPreference('anywhere')}
+                className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                  discoveryPreference === 'anywhere'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                Anywhere
+              </button>
             </div>
           </div>
 

@@ -27,6 +27,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
   const [body, setBody] = useState('');
   const [budget, setBudget] = useState('');
   const [city, setCity] = useState('');
+  const [area, setArea] = useState('');
+  const [workMode, setWorkMode] = useState('both');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -131,6 +133,8 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         body: body.trim(),
         budget: budgetInCents,
         city: city.trim() || null,
+        area: area.trim() || null,
+        work_mode: workMode,
         contact: contactInfo,
         files: attachments,
         prio: postType === 'priority',
@@ -214,20 +218,20 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Budget (Rands) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  placeholder="e.g., 2000"
-                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Budget (Rands) <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder="e.g., 2000"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+              />
+            </div>
 
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   City
@@ -236,9 +240,63 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   type="text"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g., Cape Town"
+                  placeholder="e.g., Johannesburg"
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Area / Suburb
+                </label>
+                <input
+                  type="text"
+                  value={area}
+                  onChange={(e) => setArea(e.target.value)}
+                  placeholder="e.g., Sandton"
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Work Mode <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setWorkMode('on-site')}
+                  className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                    workMode === 'on-site'
+                      ? 'bg-[#635BFF] text-white shadow-lg shadow-[#635BFF]/20'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  On-site
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWorkMode('remote')}
+                  className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                    workMode === 'remote'
+                      ? 'bg-[#635BFF] text-white shadow-lg shadow-[#635BFF]/20'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Remote
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWorkMode('both')}
+                  className={`py-3 px-4 rounded-xl font-medium transition-all cursor-pointer ${
+                    workMode === 'both'
+                      ? 'bg-[#635BFF] text-white shadow-lg shadow-[#635BFF]/20'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  Both
+                </button>
               </div>
             </div>
 
