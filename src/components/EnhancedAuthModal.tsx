@@ -446,7 +446,7 @@ export function EnhancedAuthModal({ onClose }: AuthModalProps) {
                 type="button"
                 onClick={() => {
                   onClose();
-                  const event = new CustomEvent('openTerms');
+                  const event = new CustomEvent('openPrivacy');
                   window.dispatchEvent(event);
                 }}
                 className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"

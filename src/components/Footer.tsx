@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { TermsModal } from './TermsModal';
+import { PrivacyPolicyModal } from './PrivacyPolicyModal';
 
 export function Footer() {
   const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   useEffect(() => {
     const handleOpenTerms = () => setShowTerms(true);
+    const handleOpenPrivacy = () => setShowPrivacy(true);
     window.addEventListener('openTerms', handleOpenTerms);
-    return () => window.removeEventListener('openTerms', handleOpenTerms);
+    window.addEventListener('openPrivacy', handleOpenPrivacy);
+    return () => {
+      window.removeEventListener('openTerms', handleOpenTerms);
+      window.removeEventListener('openPrivacy', handleOpenPrivacy);
+    };
   }, []);
 
   return (
@@ -38,7 +45,7 @@ export function Footer() {
           </button>
           {' · '}
           <button
-            onClick={() => setShowTerms(true)}
+            onClick={() => setShowPrivacy(true)}
             className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer underline"
           >
             Privacy Policy
@@ -52,6 +59,7 @@ export function Footer() {
 
       <AnimatePresence>
         {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
+        {showPrivacy && <PrivacyPolicyModal onClose={() => setShowPrivacy(false)} />}
       </AnimatePresence>
     </>
   );
