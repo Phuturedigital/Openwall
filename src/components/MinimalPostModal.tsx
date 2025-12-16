@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 type MinimalPostModalProps = {
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (city: string) => void;
 };
 
 const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
@@ -167,7 +167,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         }
       }
 
-      onSuccess();
+      onSuccess(city.trim());
     } catch (err: any) {
       console.error('Submit error:', err);
       setError(err.message || err.hint || 'Failed to create note. Please check console for details.');

@@ -102,11 +102,11 @@ function AppContent() {
     setCurrentView(view);
   };
 
-  const handlePostSuccess = () => {
+  const handlePostSuccess = (city: string) => {
     setShowPostModal(false);
-    setToastMessage('Note posted successfully');
+    setToastMessage(`✅ Your post is live in ${city}\nPeople nearby can now find you on Openwall.`);
     setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+    setTimeout(() => setShowToast(false), 4000);
     setCurrentView('my-notes');
   };
 

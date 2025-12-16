@@ -71,7 +71,7 @@ export function EnhancedToast({
               {currentStyle.icon}
             </div>
             <div className="flex-1 pt-0.5">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{message}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white whitespace-pre-line">{message}</p>
             </div>
             <button
               onClick={onClose}
