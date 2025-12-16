@@ -50,12 +50,15 @@ export function TermsModal({ onClose }: TermsModalProps) {
               1. About Openwall
             </h4>
             <p className="mb-2">
-              Openwall is an online platform that allows individuals and businesses to post
-              availability, requests, and connect with others for potential work or collaboration.
+              Openwall is a digital platform owned and operated by Phuture Digital.
+            </p>
+            <p className="mb-2">
+              Openwall allows individuals and businesses to post availability, post requests, and
+              connect with others for potential work or collaboration.
             </p>
             <p>
-              Openwall is a connection platform only. We do not provide services, act as an
-              employer, agent, broker, or representative for any user.
+              Openwall is a connection platform only. Neither Openwall nor Phuture Digital provides
+              services, acts as an employer, agent, broker, or representative for any user.
             </p>
           </section>
 
@@ -73,13 +76,17 @@ export function TermsModal({ onClose }: TermsModalProps) {
             <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               3. Beta Use
             </h4>
-            <p className="mb-2">Openwall is currently operating in beta. This means:</p>
-            <ul className="list-disc pl-6 space-y-1">
-              <li>Features may change, break, or be removed</li>
-              <li>Availability and performance are not guaranteed</li>
+            <p className="mb-2">Openwall is currently operating in beta.</p>
+            <p className="mb-2">This means:</p>
+            <ul className="list-disc pl-6 space-y-1 mb-3">
+              <li>Features may change, break, or be removed without notice</li>
+              <li>Platform availability and performance are not guaranteed</li>
               <li>The platform is provided "as is"</li>
-              <li>We may update or suspend the platform at any time during beta.</li>
             </ul>
+            <p>
+              Phuture Digital reserves the right to modify, suspend, or discontinue Openwall at any
+              time during beta.
+            </p>
           </section>
 
           <section>
@@ -88,23 +95,23 @@ export function TermsModal({ onClose }: TermsModalProps) {
             </h4>
             <p className="mb-2">You are responsible for:</p>
             <ul className="list-disc pl-6 space-y-1 mb-3">
-              <li>The accuracy of information you post</li>
-              <li>Any interactions, agreements, or work you enter into with other users</li>
-              <li>Conducting your own due diligence before working with anyone</li>
+              <li>The accuracy of all information you post</li>
+              <li>Your interactions, agreements, and communications with other users</li>
+              <li>Conducting your own due diligence before engaging in any work or collaboration</li>
             </ul>
-            <p className="mb-2">Openwall does not:</p>
+            <p className="mb-2">Neither Openwall nor Phuture Digital:</p>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Verify the quality of services</li>
-              <li>Guarantee work, responses, or outcomes</li>
-              <li>Endorse any user or post</li>
+              <li>Verifies the quality, legality, or suitability of services offered</li>
+              <li>Guarantees work, responses, payments, or outcomes</li>
+              <li>Endorses any user, service, or request</li>
             </ul>
           </section>
 
           <section>
             <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              5. No Employment or Agency Relationship
+              5. No Employment, Agency, or Partnership
             </h4>
-            <p className="mb-2">Using Openwall does not create:</p>
+            <p className="mb-2">Use of Openwall does not create:</p>
             <ul className="list-disc pl-6 space-y-1 mb-3">
               <li>An employment relationship</li>
               <li>An agency relationship</li>
@@ -118,14 +125,14 @@ export function TermsModal({ onClose }: TermsModalProps) {
               6. Payments and Fees
             </h4>
             <p className="mb-2">During beta, Openwall is free to use.</p>
-            <p className="mb-2">Openwall does not:</p>
+            <p className="mb-2">Neither Openwall nor Phuture Digital:</p>
             <ul className="list-disc pl-6 space-y-1 mb-3">
-              <li>Handle payments between users</li>
-              <li>Guarantee payment for work</li>
-              <li>Take responsibility for payment disputes</li>
+              <li>Processes or manages payments between users</li>
+              <li>Guarantees payment for work performed</li>
+              <li>Takes responsibility for payment disputes</li>
             </ul>
             <p>
-              Future paid features may be introduced, but this will be clearly communicated.
+              Paid features may be introduced in the future, but this will be clearly communicated.
             </p>
           </section>
 
@@ -135,13 +142,14 @@ export function TermsModal({ onClose }: TermsModalProps) {
             </h4>
             <p className="mb-2">You agree not to:</p>
             <ul className="list-disc pl-6 space-y-1 mb-3">
-              <li>Post false, misleading, or harmful content</li>
-              <li>Impersonate others</li>
-              <li>Use Openwall for unlawful purposes</li>
-              <li>Harass, spam, or abuse other users</li>
+              <li>Post false, misleading, harmful, or unlawful content</li>
+              <li>Impersonate any person or entity</li>
+              <li>Harass, abuse, spam, or exploit other users</li>
+              <li>Use Openwall for illegal purposes</li>
             </ul>
             <p>
-              We reserve the right to remove content or suspend accounts at our discretion.
+              Phuture Digital reserves the right to remove content, restrict access, or suspend
+              accounts at its discretion.
             </p>
           </section>
 
@@ -150,13 +158,12 @@ export function TermsModal({ onClose }: TermsModalProps) {
               8. Limitation of Liability
             </h4>
             <p className="mb-2">To the fullest extent permitted by law:</p>
-            <ul className="list-disc pl-6 space-y-1">
-              <li>
-                Openwall is not liable for losses, damages, or disputes arising from user
-                interactions
-              </li>
-              <li>Use of the platform is at your own risk</li>
+            <p className="mb-2">Neither Openwall nor Phuture Digital will be liable for:</p>
+            <ul className="list-disc pl-6 space-y-1 mb-3">
+              <li>Any loss, damage, or dispute arising from user interactions</li>
+              <li>Any reliance placed on information posted by users</li>
             </ul>
+            <p>Use of Openwall is entirely at your own risk.</p>
           </section>
 
           <section>
@@ -164,8 +171,9 @@ export function TermsModal({ onClose }: TermsModalProps) {
               9. Privacy
             </h4>
             <p>
-              Your use of Openwall is also governed by our Privacy Policy, which explains how we
-              collect and use personal information in line with South African POPIA requirements.
+              Your use of Openwall is also governed by the Privacy Policy, which explains how
+              personal information is collected and processed in accordance with the Protection of
+              Personal Information Act (POPIA) of South Africa.
             </p>
           </section>
 
@@ -173,8 +181,8 @@ export function TermsModal({ onClose }: TermsModalProps) {
             <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               10. Changes to These Terms
             </h4>
-            <p className="mb-2">We may update these Terms from time to time.</p>
-            <p>Continued use of Openwall means you accept the updated Terms.</p>
+            <p className="mb-2">Phuture Digital may update these Terms from time to time.</p>
+            <p>Continued use of Openwall after changes means you accept the updated Terms.</p>
           </section>
 
           <section>
@@ -188,13 +196,13 @@ export function TermsModal({ onClose }: TermsModalProps) {
             <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               12. Contact
             </h4>
+            <p className="mb-2">For questions about Openwall or these Terms, contact:</p>
             <p>
-              For questions about these Terms, contact:{' '}
               <a
-                href="mailto:hello@openwall.co.za"
+                href="mailto:hello@phuturedigital.co.za"
                 className="text-blue-600 dark:text-blue-400 hover:underline"
               >
-                hello@openwall.co.za
+                hello@phuturedigital.co.za
               </a>
             </p>
           </section>
