@@ -144,6 +144,36 @@ export function AuthModal({ onClose }: AuthModalProps) {
             </div>
           )}
 
+          {mode === 'signup' && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+              By creating an account, you agree to the{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  const event = new CustomEvent('openTerms');
+                  window.dispatchEvent(event);
+                }}
+                className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                Terms & Conditions
+              </button>
+              {' and '}
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  const event = new CustomEvent('openTerms');
+                  window.dispatchEvent(event);
+                }}
+                className="text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                Privacy Policy
+              </button>
+              .
+            </p>
+          )}
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
