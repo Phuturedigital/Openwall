@@ -44,8 +44,11 @@ function AppContent() {
   const showSearchBar = currentView === 'wall' || currentView === 'recent-notes';
 
   useEffect(() => {
-    setShowOnboarding(true);
-  }, []);
+    const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');
+    if (!user && !hasCompletedOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleNoteFulfilled = () => {
@@ -109,6 +112,7 @@ function AppContent() {
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
+    localStorage.setItem('onboardingCompleted', 'true');
     setToastMessage('Welcome to Openwall – you\'re all set.');
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
