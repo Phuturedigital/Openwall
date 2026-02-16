@@ -736,7 +736,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={handleRequestConnect}
+                      onClick={() => handleRequestConnect()}
                       disabled={requesting}
                       className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
