@@ -9,7 +9,6 @@ export async function sendWelcomeEmail(userId: string, email: string, displayNam
       .maybeSingle();
 
     if (alreadySent) {
-      console.log('Welcome email already sent to this user');
       return { success: true, alreadySent: true };
     }
 
@@ -41,7 +40,6 @@ export async function sendWelcomeEmail(userId: string, email: string, displayNam
 
     return { success: true, result };
   } catch (error) {
-    console.error('Error sending welcome email:', error);
     return { success: false, error };
   }
 }

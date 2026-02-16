@@ -29,7 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
 
       if (error) {
-        console.error('Error getting session:', error);
         setLoading(false);
         return;
       }
@@ -40,8 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setLoading(false);
       }
-    }).catch((error) => {
-      console.error('Error in getSession:', error);
+    }).catch(() => {
       if (mounted) {
         setLoading(false);
       }
@@ -112,8 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!error && data) {
         setProfile(data);
       }
-    } catch (error) {
-      console.error('Error loading profile:', error);
+    } catch {
+      // Silent failure - profile will be null
     } finally {
       setLoading(false);
     }

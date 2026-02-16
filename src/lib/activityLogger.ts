@@ -15,10 +15,10 @@ export async function logUserActivity(
     });
 
     if (error) {
-      console.error('Failed to log user activity:', error);
+      // Silently fail - activity logging should not break user experience
     }
-  } catch (err) {
-    console.error('Error logging user activity:', err);
+  } catch {
+    // Silently fail - activity logging should not break user experience
   }
 }
 

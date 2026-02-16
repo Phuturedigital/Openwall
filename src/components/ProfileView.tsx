@@ -136,7 +136,6 @@ export function ProfileView() {
     setSaving(false);
 
     if (error) {
-      console.error('Profile update error:', error);
       setMessage(`Failed to update profile: ${error.message}`);
       setTimeout(() => setMessage(''), 5000);
     } else {
