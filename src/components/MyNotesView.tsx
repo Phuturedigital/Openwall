@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Edit2, Trash2, CheckCircle, Eye, Users } from 'lucide-react';
+import { X, CreditCard as Edit2, Trash2, CheckCircle, Eye, Users } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
 import { LoadingLogo } from './LoadingLogo';
+import { NotesGridSkeleton } from './LoadingSkeleton';
 
 const PASTEL_COLORS = [
   '#FEF3C7', '#DBEAFE', '#FCE7F3', '#E0E7FF', '#D1FAE5',
@@ -89,16 +90,20 @@ export function MyNotesView() {
   async function handleDeleteNote() {
     if (!deletingNote) return;
 
+    setNotes(notes.filter(n => n.id !== deletingNote.id));
+
     await supabase
       .from('notes')
       .update({ status: 'closed', updated_at: new Date().toISOString() })
       .eq('id', deletingNote.id);
 
-    setNotes(notes.filter(n => n.id !== deletingNote.id));
     setDeletingNote(null);
   }
 
   async function handleMarkFulfilled(noteId: string) {
+    setNotes(notes.filter(n => n.id !== noteId));
+    setFulfillingNote(null);
+
     await supabase
       .from('notes')
       .update({
@@ -107,9 +112,6 @@ export function MyNotesView() {
         updated_at: new Date().toISOString()
       })
       .eq('id', noteId);
-
-    setNotes(notes.filter(n => n.id !== noteId));
-    setFulfillingNote(null);
 
     if (window.location) {
       setTimeout(() => {
@@ -143,8 +145,11 @@ export function MyNotesView() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <LoadingLogo className="w-12 h-12" />
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-8 animate-pulse"></div>
+          <NotesGridSkeleton count={6} />
+        </div>
       </div>
     );
   }

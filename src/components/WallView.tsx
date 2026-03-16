@@ -5,6 +5,7 @@ import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
 import { LoadingLogo } from './LoadingLogo';
+import { NotesGridSkeleton } from './LoadingSkeleton';
 
 const NOTES_PER_PAGE = 24;
 
@@ -197,7 +198,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     }
 
     if (searchQuery.trim()) {
-      query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
+      query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,area.ilike.%${searchQuery}%`);
     }
 
     const { data, error } = await query
@@ -409,6 +410,10 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
           )}
         </div>
 
+        {loading && page === 0 && (
+          <NotesGridSkeleton count={12} />
+        )}
+
         {notes.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400 text-lg">No posts yet in this area.</p>
@@ -426,7 +431,9 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
             </p>
           </div>
         )}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+        {!loading || page > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {notes.map((note) => {
             const category = note.category || getCategoryFromText(note.body);
             const cardColor = getColorForCategory(category);
@@ -619,10 +626,11 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
               </motion.article>
             );
           })}
-        </div>
+          </div>
+        ) : null}
 
         <div ref={observerTarget} className="h-20 flex items-center justify-center">
-          {loading && <LoadingLogo className="w-8 h-8" />}
+          {loading && page > 0 && <LoadingLogo className="w-8 h-8" />}
         </div>
       </div>
 

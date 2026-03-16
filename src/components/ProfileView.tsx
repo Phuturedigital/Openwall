@@ -4,6 +4,7 @@ import { User, MapPin, Phone, Mail, Building, Shield, Briefcase, Award, FileText
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { ProfileSkeleton } from './LoadingSkeleton';
 
 const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
 const SERVICE_CATEGORIES = ['Design', 'Web', 'Photography', 'Marketing', 'Video', 'Writing'];
@@ -103,7 +104,7 @@ export function ProfileView() {
     }
 
     setSaving(true);
-    setMessage('');
+    setMessage('Saving...');
 
     const updateData: any = {
       full_name: fullName,

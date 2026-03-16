@@ -1,24 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import { Navigation } from './components/Navigation';
 import { WallView } from './components/WallView';
-import { RecentNotesView } from './components/RecentNotesView';
-import { MyNotesView } from './components/MyNotesView';
-import { RequestsView } from './components/RequestsView';
-import { PaymentsView } from './components/PaymentsView';
-import { ProfileView } from './components/ProfileView';
-import { PastNotesView } from './components/PastNotesView';
-import { SettingsView } from './components/SettingsView';
-import { EnhancedAuthModal } from './components/EnhancedAuthModal';
-import { MinimalPostModal } from './components/MinimalPostModal';
-import { OnboardingModal } from './components/OnboardingModal';
 import { EnhancedToast, ToastType } from './components/EnhancedToast';
 import { FloatingSearchBar } from './components/FloatingSearchBar';
 import { Footer } from './components/Footer';
 import { Router } from './components/Router';
 import { LoadingLogo } from './components/LoadingLogo';
+
+const RecentNotesView = lazy(() => import('./components/RecentNotesView').then(m => ({ default: m.RecentNotesView })));
+const MyNotesView = lazy(() => import('./components/MyNotesView').then(m => ({ default: m.MyNotesView })));
+const RequestsView = lazy(() => import('./components/RequestsView').then(m => ({ default: m.RequestsView })));
+const PaymentsView = lazy(() => import('./components/PaymentsView').then(m => ({ default: m.PaymentsView })));
+const ProfileView = lazy(() => import('./components/ProfileView').then(m => ({ default: m.ProfileView })));
+const PastNotesView = lazy(() => import('./components/PastNotesView').then(m => ({ default: m.PastNotesView })));
+const SettingsView = lazy(() => import('./components/SettingsView').then(m => ({ default: m.SettingsView })));
+const EnhancedAuthModal = lazy(() => import('./components/EnhancedAuthModal').then(m => ({ default: m.EnhancedAuthModal })));
+const MinimalPostModal = lazy(() => import('./components/MinimalPostModal').then(m => ({ default: m.MinimalPostModal })));
+const OnboardingModal = lazy(() => import('./components/OnboardingModal').then(m => ({ default: m.OnboardingModal })));
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -119,23 +120,57 @@ function AppContent() {
   };
 
   const renderView = () => {
+    const loadingFallback = (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingLogo className="w-12 h-12" />
+      </div>
+    );
+
     switch (currentView) {
       case 'wall':
         return <WallView searchQuery={searchQuery} onSignInRequired={() => setShowAuthModal(true)} />;
       case 'recent-notes':
-        return <RecentNotesView searchQuery={searchQuery} />;
+        return (
+          <Suspense fallback={loadingFallback}>
+            <RecentNotesView searchQuery={searchQuery} />
+          </Suspense>
+        );
       case 'my-notes':
-        return <MyNotesView />;
+        return (
+          <Suspense fallback={loadingFallback}>
+            <MyNotesView />
+          </Suspense>
+        );
       case 'requests':
-        return <RequestsView />;
+        return (
+          <Suspense fallback={loadingFallback}>
+            <RequestsView />
+          </Suspense>
+        );
       case 'payments':
-        return <PaymentsView />;
+        return (
+          <Suspense fallback={loadingFallback}>
+            <PaymentsView />
+          </Suspense>
+        );
       case 'profile':
-        return <ProfileView />;
+        return (
+          <Suspense fallback={loadingFallback}>
+            <ProfileView />
+          </Suspense>
+        );
       case 'past-notes':
-        return <PastNotesView />;
+        return (
+          <Suspense fallback={loadingFallback}>
+            <PastNotesView />
+          </Suspense>
+        );
       case 'settings':
-        return <SettingsView />;
+        return (
+          <Suspense fallback={loadingFallback}>
+            <SettingsView />
+          </Suspense>
+        );
       default:
         return <WallView searchQuery={searchQuery} onSignInRequired={() => setShowAuthModal(true)} />;
     }
@@ -155,18 +190,28 @@ function AppContent() {
 
       {renderView()}
 
-      {showOnboarding && <OnboardingModal onComplete={handleOnboardingComplete} />}
+      {showOnboarding && (
+        <Suspense fallback={null}>
+          <OnboardingModal onComplete={handleOnboardingComplete} />
+        </Suspense>
+      )}
 
       <AnimatePresence>
-        {showAuthModal && <EnhancedAuthModal onClose={() => setShowAuthModal(false)} />}
+        {showAuthModal && (
+          <Suspense fallback={null}>
+            <EnhancedAuthModal onClose={() => setShowAuthModal(false)} />
+          </Suspense>
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
         {showPostModal && (
-          <MinimalPostModal
-            onClose={() => setShowPostModal(false)}
-            onSuccess={handlePostSuccess}
-          />
+          <Suspense fallback={null}>
+            <MinimalPostModal
+              onClose={() => setShowPostModal(false)}
+              onSuccess={handlePostSuccess}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 

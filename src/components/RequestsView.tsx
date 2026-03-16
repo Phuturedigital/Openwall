@@ -4,6 +4,7 @@ import { Check, X, Clock, Shield, MapPin } from 'lucide-react';
 import { supabase, ConnectionRequest } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingLogo } from './LoadingLogo';
+import { RequestsListSkeleton } from './LoadingSkeleton';
 
 type Tab = 'received' | 'sent';
 
@@ -43,6 +44,10 @@ export function RequestsView() {
   }
 
   async function handleApprove(requestId: string) {
+    setReceivedRequests(prev =>
+      prev.map(r => r.id === requestId ? { ...r, status: 'approved' as const } : r)
+    );
+
     await supabase
       .from('connection_requests')
       .update({ status: 'approved', notified: true })
@@ -52,6 +57,10 @@ export function RequestsView() {
   }
 
   async function handleDecline(requestId: string) {
+    setReceivedRequests(prev =>
+      prev.map(r => r.id === requestId ? { ...r, status: 'declined' as const } : r)
+    );
+
     await supabase
       .from('connection_requests')
       .update({ status: 'declined', notified: true })
@@ -118,9 +127,7 @@ export function RequestsView() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <LoadingLogo className="w-10 h-10" />
-          </div>
+          <RequestsListSkeleton count={5} />
         ) : filteredRequests.length === 0 ? (
           <div className="text-center py-20">
             <Clock className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
