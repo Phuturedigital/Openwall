@@ -509,14 +509,9 @@ await logUserActivity(userId, ActivityActions.PASSWORD_RESET_COMPLETED);
 4. Find **Redirect URLs** section
 5. Click **Add URL** and enter:
    ```
-   http://localhost:5173/reset-password
+   https://www.openwall.co.za/update-password
    ```
-6. Click **Add URL** again and enter:
-   ```
-   https://yourdomain.com/reset-password
-   ```
-   (Replace `yourdomain.com` with your actual domain)
-7. Click **Save**
+6. Click **Save**
 
 **Why This Matters:**
 - Supabase validates all redirect URLs for security
@@ -526,10 +521,9 @@ await logUserActivity(userId, ActivityActions.PASSWORD_RESET_COMPLETED);
 
 **Common Mistake:**
 ```
-❌ Wrong: https://yourdomain.com
-❌ Wrong: yourdomain.com/reset-password
-✅ Correct: https://yourdomain.com/reset-password
-✅ Correct: http://localhost:5173/reset-password
+❌ Wrong: https://www.openwall.co.za
+❌ Wrong: www.openwall.co.za/update-password
+✅ Correct: https://www.openwall.co.za/update-password
 ```
 
 ### Step 2: Test the Flow
@@ -550,11 +544,11 @@ open http://localhost:5173/forgot-password
 2. Click "Send Reset Link"
 3. Check your email (check spam if not in inbox)
 4. Click the link in email
-5. Should open reset password page
+5. Should open https://www.openwall.co.za/update-password
 6. Enter strong password
 7. Confirm password
 8. Submit
-9. Should see success and redirect
+9. Should see success and redirect to sign in
 
 **If It Doesn't Work:**
 - Check Supabase logs: Dashboard → Logs → Auth
@@ -867,12 +861,13 @@ Attacker → Has valid link
 
 **Current Implementation:**
 ```typescript
-// ForgotPassword.tsx line 19
-const redirectUrl = `${window.location.origin}/reset-password`;
+// ForgotPassword.tsx line 19-20
+const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: 'https://www.openwall.co.za/update-password',
+});
 
-// This automatically gives:
-// - http://localhost:5173/reset-password (in dev)
-// - https://yourdomain.com/reset-password (in production)
+// Redirects to: https://www.openwall.co.za/update-password
+// Router handles both /update-password and /reset-password
 ```
 
 ### Issue: Multiple Password Resets

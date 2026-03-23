@@ -16,10 +16,8 @@ export function ForgotPassword() {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/reset-password`;
-
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+        redirectTo: 'https://www.openwall.co.za/update-password',
       });
 
       if (resetError) {

@@ -3,7 +3,7 @@ import { ResetPassword } from './ResetPassword';
 import { EmailVerified } from './EmailVerified';
 import { ForgotPassword } from './ForgotPassword';
 
-type Route = 'app' | 'reset-password' | 'email-verified' | 'forgot-password';
+type Route = 'app' | 'reset-password' | 'email-verified' | 'forgot-password' | 'update-password';
 
 export function Router({ children }: { children: React.ReactNode }) {
   const [route, setRoute] = useState<Route>('app');
@@ -12,7 +12,7 @@ export function Router({ children }: { children: React.ReactNode }) {
     const path = window.location.pathname;
     const hash = window.location.hash;
 
-    if (path === '/reset-password' || hash.includes('type=recovery')) {
+    if (path === '/update-password' || path === '/reset-password' || hash.includes('type=recovery')) {
       setRoute('reset-password');
     } else if (path === '/email-verified' || hash.includes('type=email')) {
       setRoute('email-verified');
@@ -26,7 +26,7 @@ export function Router({ children }: { children: React.ReactNode }) {
       const newPath = window.location.pathname;
       const newHash = window.location.hash;
 
-      if (newPath === '/reset-password' || newHash.includes('type=recovery')) {
+      if (newPath === '/update-password' || newPath === '/reset-password' || newHash.includes('type=recovery')) {
         setRoute('reset-password');
       } else if (newPath === '/email-verified' || newHash.includes('type=email')) {
         setRoute('email-verified');
