@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Check, AlertCircle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Check, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { LoadingLogo } from './LoadingLogo';
 import { supabase } from '../lib/supabase';
 import { logUserActivity, ActivityActions } from '../lib/activityLogger';
@@ -18,6 +18,7 @@ export function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
 
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
@@ -26,6 +27,47 @@ export function ResetPassword() {
     password: false,
     confirmPassword: false,
   });
+
+  useEffect(() => {
+    let mounted = true;
+
+    const checkRecoverySession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!mounted) return;
+
+        if (!session) {
+          setIsValidSession(false);
+          return;
+        }
+
+        setIsValidSession(true);
+      } catch (err) {
+        if (mounted) {
+          setIsValidSession(false);
+        }
+      }
+    };
+
+    checkRecoverySession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsValidSession(true);
+        setError('');
+      } else if (event === 'SIGNED_OUT') {
+        setIsValidSession(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!touched.password) return;
@@ -90,6 +132,66 @@ export function ResetPassword() {
     }
   };
 
+  if (isValidSession === null) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center"
+        >
+          <LoadingLogo className="w-16 h-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
+          <p className="text-gray-600 dark:text-gray-400">Verifying reset link...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (isValidSession === false) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-gray-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+          >
+            <XCircle className="w-20 h-20 text-red-500 mx-auto mb-6" />
+          </motion.div>
+
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Reset Link Expired
+          </h1>
+
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            This password reset link is invalid or has expired. Please request a new one.
+          </p>
+
+          <motion.a
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            href="/forgot-password"
+            className="inline-block w-full py-3 bg-blue-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all cursor-pointer"
+          >
+            Request New Link
+          </motion.a>
+
+          <a
+            href="/"
+            className="block mt-4 text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors cursor-pointer"
+          >
+            Back to Sign In
+          </a>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -112,11 +214,11 @@ export function ResetPassword() {
           </h1>
 
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Your password has been successfully updated. Please log in with your new password.
+            Your password has been successfully updated. You can now sign in with your new password.
           </p>
 
           <div className="text-sm text-gray-500 dark:text-gray-500">
-            Redirecting to login...
+            Redirecting to sign in...
           </div>
         </motion.div>
       </div>
