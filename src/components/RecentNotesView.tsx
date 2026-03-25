@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, MapPin, DollarSign, X, Download, Paperclip, Star, CheckCircle } from 'lucide-react';
-import { supabase, Note } from '../lib/supabase';
+import { supabase, Note, PublicNote } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingLogo } from './LoadingLogo';
 
@@ -38,9 +38,10 @@ type RecentNotesViewProps = {
 };
 
 export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<PublicNote[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [selectedNote, setSelectedNote] = useState<PublicNote | null>(null);
+  const [fullNoteData, setFullNoteData] = useState<Note | null>(null);
   const [requestStatus, setRequestStatus] = useState<'none' | 'pending' | 'approved' | 'declined' | 'closed'>('none');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [requesting, setRequesting] = useState(false);
@@ -52,6 +53,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
   }, [searchQuery]);
 
   useEffect(() => {
+    setFullNoteData(null);
     if (selectedNote && profile) {
       checkConnectionStatus();
     }
@@ -61,9 +63,8 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
     setLoading(true);
     try {
       let query = supabase
-        .from('notes')
-        .select('*, profiles(id, full_name, avatar_url, city)')
-        .eq('status', 'open');
+        .from('public_notes_feed')
+        .select('*');
 
       if (searchQuery.trim()) {
         query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
@@ -74,7 +75,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
         .limit(20);
 
       if (error) throw error;
-      setNotes(data || []);
+      setNotes((data as PublicNote[]) || []);
     } catch (err) {
       console.error('Error loading recent notes:', err);
     } finally {
@@ -84,6 +85,17 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
 
   async function checkConnectionStatus() {
     if (!selectedNote || !profile) return;
+
+    if (selectedNote.is_owner) {
+      const { data: fullNote } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', selectedNote.id)
+        .maybeSingle();
+      if (fullNote) setFullNoteData(fullNote);
+      setIsUnlocked(true);
+      return;
+    }
 
     const { data: request } = await supabase
       .from('connection_requests')
@@ -96,16 +108,18 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
       setRequestStatus(request.status as any);
 
       if (request.status === 'approved') {
-        const { data: unlock } = await supabase
-          .from('unlocks')
-          .select('payment_status')
-          .eq('note_id', selectedNote.id)
-          .eq('freelancer_id', profile.id)
-          .maybeSingle();
-
-        if (unlock && unlock.payment_status === 'paid') {
-          setIsUnlocked(true);
+        const { data: hasUnlocked } = await supabase.rpc('check_user_has_unlocked', {
+          p_note_id: selectedNote.id,
+        });
+        if (hasUnlocked) {
+          const { data: fullNote } = await supabase
+            .from('notes')
+            .select('*')
+            .eq('id', selectedNote.id)
+            .maybeSingle();
+          if (fullNote) setFullNoteData(fullNote);
         }
+        setIsUnlocked(hasUnlocked === true);
       }
     } else {
       setRequestStatus('none');
@@ -139,28 +153,24 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
 
     setUnlocking(true);
     try {
-      const { error: unlockError } = await supabase.from('unlocks').insert({
-        note_id: selectedNote.id,
-        freelancer_id: profile.id,
-        payment_status: 'paid',
+      const { data, error } = await supabase.rpc('unlock_note_beta_free', {
+        p_note_id: selectedNote.id,
       });
 
-      if (unlockError) throw unlockError;
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Unlock failed');
 
-      const { error: txError } = await supabase.from('transactions').insert({
-        user_id: profile.id,
-        note_id: selectedNote.id,
-        amount: 1500,
-        kind: 'unlock',
-        status: 'paid',
-      });
+      const { data: fullNote } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', selectedNote.id)
+        .maybeSingle();
 
-      if (txError) throw txError;
-
+      if (fullNote) setFullNoteData(fullNote);
       setIsUnlocked(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error unlocking contact:', err);
-      alert('Failed to unlock contact. Please try again.');
+      alert(err?.message || 'Failed to unlock contact. Please try again.');
     } finally {
       setUnlocking(false);
     }
@@ -260,10 +270,10 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                     <span className="font-medium">{formatBudget(note.budget)}</span>
                   </div>
                 )}
-                {note.profiles?.city && (
+                {note.city && (
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    <span>{note.profiles.city}</span>
+                    <span>{note.city}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-1 ml-auto">
@@ -272,11 +282,11 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                 </div>
               </div>
 
-              {note.files && note.files.length > 0 && (
+              {note.unlock_count > 0 && (
                 <div className="mt-3 pt-3 border-t border-gray-900/10">
                   <div className="flex items-center gap-1 text-xs text-gray-600">
                     <Paperclip className="w-3 h-3" />
-                    <span>{note.files.length} attachment{note.files.length !== 1 ? 's' : ''}</span>
+                    <span>{note.unlock_count} unlock{note.unlock_count !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
               )}
@@ -292,7 +302,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedNote(null)}
+            onClick={() => { setSelectedNote(null); setFullNoteData(null); }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -306,7 +316,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                   {selectedNote.title || 'Note Details'}
                 </h2>
                 <button
-                  onClick={() => setSelectedNote(null)}
+                  onClick={() => { setSelectedNote(null); setFullNoteData(null); }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -317,14 +327,14 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                 <div className="mb-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                      {getInitials(selectedNote.profiles?.full_name || null)}
+                      {getInitials(selectedNote.poster_name || null)}
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-white">
-                        {selectedNote.profiles?.full_name || 'Anonymous'}
+                        {selectedNote.poster_name || 'Anonymous'}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {selectedNote.profiles?.city || 'Unknown location'} · {formatTimeAgo(selectedNote.created_at)}
+                        {selectedNote.city || 'Unknown location'} · {formatTimeAgo(selectedNote.created_at)}
                       </p>
                     </div>
                   </div>
@@ -348,11 +358,11 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                   </div>
                 </div>
 
-                {selectedNote.files && selectedNote.files.length > 0 && (
+                {fullNoteData?.files && fullNoteData.files.length > 0 && (
                   <div className="mb-6">
                     <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Attachments</h3>
                     <div className="space-y-2">
-                      {selectedNote.files.map((file, idx) => (
+                      {fullNoteData.files.map((file, idx) => (
                         <a
                           key={idx}
                           href={file.url}
@@ -369,7 +379,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                   </div>
                 )}
 
-                {profile && selectedNote.user_id !== profile.id && (
+                {profile && !selectedNote.is_owner && (
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
                     {isUnlocked ? (
                       <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 text-center">
@@ -378,14 +388,14 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                           You can now reach out to this person
                         </p>
-                        {selectedNote.contact?.email && (
+                        {fullNoteData?.contact?.email && (
                           <p className="text-sm text-gray-900 dark:text-white">
-                            Email: <span className="font-medium">{selectedNote.contact.email}</span>
+                            Email: <span className="font-medium">{fullNoteData.contact.email}</span>
                           </p>
                         )}
-                        {selectedNote.contact?.phone && (
+                        {fullNoteData?.contact?.phone && (
                           <p className="text-sm text-gray-900 dark:text-white mt-1">
-                            Phone: <span className="font-medium">{selectedNote.contact.phone}</span>
+                            Phone: <span className="font-medium">{fullNoteData.contact.phone}</span>
                           </p>
                         )}
                       </div>

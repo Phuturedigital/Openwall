@@ -76,14 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (event === 'SIGNED_IN' && session.user.email_confirmed_at) {
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('display_name')
+              .select('full_name')
               .eq('id', session.user.id)
               .maybeSingle();
 
             await sendWelcomeEmail(
               session.user.id,
               session.user.email!,
-              profileData?.display_name
+              profileData?.full_name
             );
           }
         } else {

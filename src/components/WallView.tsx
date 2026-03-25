@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle, MapPin } from 'lucide-react';
-import { supabase, Note } from '../lib/supabase';
+import { supabase, Note, PublicNote } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
 import { LoadingLogo } from './LoadingLogo';
@@ -84,13 +84,14 @@ type WallViewProps = {
 const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
 
 export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<PublicNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [editingNote, setEditingNote] = useState<Note | null>(null);
-  const [deletingNote, setDeletingNote] = useState<Note | null>(null);
+  const [selectedNote, setSelectedNote] = useState<PublicNote | null>(null);
+  const [fullNoteData, setFullNoteData] = useState<Note | null>(null);
+  const [editingNote, setEditingNote] = useState<PublicNote | null>(null);
+  const [deletingNote, setDeletingNote] = useState<PublicNote | null>(null);
   const [requestStatus, setRequestStatus] = useState<'none' | 'pending' | 'approved' | 'declined' | 'closed'>('none');
   const [unlocked, setUnlocked] = useState(false);
   const [requesting, setRequesting] = useState(false);
@@ -141,6 +142,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   }, [hasMore, loading, page]);
 
   useEffect(() => {
+    setFullNoteData(null);
     if (selectedNote && profile) {
       checkStatus();
     } else {
@@ -152,7 +154,14 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   async function checkStatus() {
     if (!selectedNote || !profile) return;
 
-    if (selectedNote.user_id === profile.id) {
+    if (selectedNote.is_owner) {
+      // Fetch own note (includes contact info)
+      const { data: fullNote } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', selectedNote.id)
+        .maybeSingle();
+      if (fullNote) setFullNoteData(fullNote);
       setUnlocked(true);
       setRequestStatus('none');
       return;
@@ -169,14 +178,18 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       setRequestStatus(request.status as any);
 
       if (request.status === 'approved') {
-        const { data: unlock } = await supabase
-          .from('unlocks')
-          .select('payment_status')
-          .eq('note_id', selectedNote.id)
-          .eq('freelancer_id', profile.id)
-          .maybeSingle();
-
-        setUnlocked(unlock?.payment_status === 'paid');
+        const { data: hasUnlocked } = await supabase.rpc('check_user_has_unlocked', {
+          p_note_id: selectedNote.id,
+        });
+        if (hasUnlocked) {
+          const { data: fullNote } = await supabase
+            .from('notes')
+            .select('*')
+            .eq('id', selectedNote.id)
+            .maybeSingle();
+          if (fullNote) setFullNoteData(fullNote);
+        }
+        setUnlocked(hasUnlocked === true);
       }
     } else {
       setRequestStatus('none');
@@ -188,10 +201,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     setLoading(true);
 
     let query = supabase
-      .from('notes')
-      .select('*, profiles!notes_user_id_fkey(*)')
-      .neq('status', 'deleted')
-      .neq('status', 'fulfilled');
+      .from('public_notes_feed')
+      .select('*');
 
     if (selectedCity) {
       query = query.ilike('city', selectedCity);
@@ -211,7 +222,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     }
 
     if (!error && data) {
-      setNotes((prev) => (pageNum === 0 ? data : [...prev, ...data]));
+      setNotes((prev) => (pageNum === 0 ? data as PublicNote[] : [...prev, ...data as PublicNote[]]));
       setHasMore(data.length === NOTES_PER_PAGE);
     }
     setLoading(false);
@@ -283,25 +294,25 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
     setUnlocking(true);
     try {
-      const { error: unlockError } = await supabase.from('unlocks').insert({
-        note_id: selectedNote.id,
-        freelancer_id: profile.id,
-        payment_status: 'paid',
+      const { data, error } = await supabase.rpc('unlock_note_beta_free', {
+        p_note_id: selectedNote.id,
       });
 
-      if (unlockError && unlockError.code !== '23505') throw unlockError;
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Unlock failed');
 
-      await supabase.from('transactions').insert({
-        user_id: profile.id,
-        note_id: selectedNote.id,
-        amount: 1500,
-        kind: 'unlock',
-        status: 'paid',
-      });
+      // Fetch full note now that unlock record exists (contact info accessible)
+      const { data: fullNote } = await supabase
+        .from('notes')
+        .select('*')
+        .eq('id', selectedNote.id)
+        .maybeSingle();
 
+      if (fullNote) setFullNoteData(fullNote);
       setUnlocked(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Unlock error:', err);
+      alert(err?.message || 'Failed to unlock contact. Please try again.');
     } finally {
       setUnlocking(false);
     }
@@ -319,6 +330,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     setDeletingNote(null);
     if (selectedNote?.id === deletingNote.id) {
       setSelectedNote(null);
+      setFullNoteData(null);
     }
   }
 
@@ -328,13 +340,11 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       .update({ status: 'fulfilled' })
       .eq('id', noteId);
 
-    const updatedNotes = notes.map(n =>
-      n.id === noteId ? { ...n, status: 'fulfilled' as const } : n
-    );
-    setNotes(updatedNotes);
+    setNotes(notes.filter(n => n.id !== noteId));
 
     if (selectedNote?.id === noteId) {
-      setSelectedNote({ ...selectedNote, status: 'fulfilled' });
+      setSelectedNote(null);
+      setFullNoteData(null);
     }
   }
 
@@ -359,7 +369,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     return `R${(cents / 100).toFixed(0)}`;
   };
 
-  const isOwner = (note: Note) => profile && note.user_id === profile.id;
+  const isOwner = (note: PublicNote) => note.is_owner;
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
@@ -438,11 +448,10 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
             const category = note.category || getCategoryFromText(note.body);
             const cardColor = getColorForCategory(category);
             const categoryLabel = getCategoryLabel(category);
-            const hasAttachments = note.files && note.files.length > 0;
+            const hasAttachments = false;
             const owner = isOwner(note);
-            const posterProfile = note.profiles as any;
-            const posterName = posterProfile?.full_name || 'Verified User';
-            const posterCity = posterProfile?.city || note.city;
+            const posterName = note.poster_name || 'Verified User';
+            const posterCity = note.city;
 
             return (
               <motion.article
@@ -587,9 +596,9 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
                   <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
                     <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                      {posterProfile?.full_name ? (
+                      {posterName !== 'Verified User' ? (
                         <div className="w-6 h-6 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-semibold text-[10px] shadow-sm">
-                          {getInitials(posterProfile.full_name)}
+                          {getInitials(posterName)}
                         </div>
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-[10px] shadow-sm">
@@ -640,7 +649,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSelectedNote(null)}
+            onClick={() => { setSelectedNote(null); setFullNoteData(null); }}
             className="fixed inset-0 bg-black/5 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div
@@ -654,7 +663,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
               <div className="flex-shrink-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-700 px-8 py-6 flex items-center justify-between rounded-t-3xl">
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Note Details</h3>
                 <button
-                  onClick={() => setSelectedNote(null)}
+                  onClick={() => { setSelectedNote(null); setFullNoteData(null); }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
@@ -707,20 +716,17 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                   </div>
                 </div>
 
-                {selectedNote.files && selectedNote.files.length > 0 && (
+                {fullNoteData?.files && fullNoteData.files.length > 0 && (
                   <div className="space-y-2">
                     <span className="text-sm text-gray-500 dark:text-gray-400 block">Attachments:</span>
                     <div className="space-y-2">
-                      {selectedNote.files.map((file, idx) => (
+                      {fullNoteData.files.map((file, idx) => (
                         <a
                           key={idx}
-                          href={unlocked ? file.url : '#'}
-                          target={unlocked ? "_blank" : undefined}
+                          href={file.url}
+                          target="_blank"
                           rel="noopener noreferrer"
-                          onClick={(e) => !unlocked && e.preventDefault()}
-                          className={`flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl transition-colors ${
-                            unlocked ? 'hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer' : 'opacity-50 cursor-not-allowed'
-                          }`}
+                          className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                         >
                           <Download className="w-4 h-4 text-gray-400" />
                           <span className="text-sm text-gray-700 dark:text-gray-300">{file.name}</span>
@@ -759,25 +765,25 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                       <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Contact Information
                       </h4>
-                      {selectedNote.contact?.email && (
+                      {fullNoteData?.contact?.email && (
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-500 dark:text-gray-400">Email:</span>
                           <a
-                            href={`mailto:${selectedNote.contact.email}`}
+                            href={`mailto:${fullNoteData.contact.email}`}
                             className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
                           >
-                            {selectedNote.contact.email}
+                            {fullNoteData.contact.email}
                           </a>
                         </div>
                       )}
-                      {selectedNote.contact?.phone && (
+                      {fullNoteData?.contact?.phone && (
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-500 dark:text-gray-400">Phone:</span>
                           <a
-                            href={`tel:${selectedNote.contact.phone}`}
+                            href={`tel:${fullNoteData.contact.phone}`}
                             className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
                           >
-                            {selectedNote.contact.phone}
+                            {fullNoteData.contact.phone}
                           </a>
                         </div>
                       )}
@@ -839,7 +845,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       <AnimatePresence>
         {editingNote && (
           <EditNoteModal
-            note={editingNote}
+            note={editingNote as unknown as Note}
             onClose={() => setEditingNote(null)}
             onSuccess={() => {
               setEditingNote(null);

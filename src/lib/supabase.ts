@@ -21,8 +21,9 @@ export type Profile = {
   email: string;
   full_name: string | null;
   phone: string | null;
-  company: string | null;
+  company_name: string | null;
   city: string | null;
+  area: string | null;
   daily_request_limit: number;
   role: string;
   user_type: string;
@@ -33,10 +34,37 @@ export type Profile = {
   portfolio: FileAttachment[];
   experience: string | null;
   industry: string | null;
+  service_category: string | null;
+  services_offered: string[];
+  work_mode: string | null;
   looking_for: string[];
+  help_needed: string[];
+  intent: string | null;
+  discovery_preference: string | null;
   post_visibility: string;
   last_active: string;
   created_at: string;
+};
+
+export type PublicNote = {
+  id: string;
+  title: string | null;
+  body: string;
+  category: string | null;
+  budget: number | null;
+  city: string | null;
+  area: string | null;
+  work_mode: string | null;
+  prio: boolean;
+  prioritised_until: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  is_currently_prioritised: boolean;
+  is_owner: boolean;
+  poster_name: string | null;
+  poster_profession: string | null;
+  unlock_count: number;
 };
 
 export type FileAttachment = {
