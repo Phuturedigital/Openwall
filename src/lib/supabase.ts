@@ -86,6 +86,8 @@ export type Note = {
   title: string | null;
   budget: number | null;
   city: string | null;
+  area: string | null;
+  work_mode: string | null;
   category: string | null;
   files: FileAttachment[];
   contact: ContactInfo | null;

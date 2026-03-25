@@ -4,7 +4,6 @@ import { X, CreditCard as Edit2, Trash2, CheckCircle, Eye, Users } from 'lucide-
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
-import { LoadingLogo } from './LoadingLogo';
 import { NotesGridSkeleton } from './LoadingSkeleton';
 
 const PASTEL_COLORS = [

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Phone, Mail, Building, Shield, Briefcase, Award, FileText, X, HelpCircle, Lock } from 'lucide-react';
+import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { ChangePasswordModal } from './ChangePasswordModal';
-import { ProfileSkeleton } from './LoadingSkeleton';
 
 const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
 const SERVICE_CATEGORIES = ['Design', 'Web', 'Photography', 'Marketing', 'Video', 'Writing'];

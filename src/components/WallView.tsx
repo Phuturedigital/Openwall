@@ -228,7 +228,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     setLoading(false);
   }
 
-  async function handleRequestConnect(note?: Note) {
+  async function handleRequestConnect(note?: PublicNote | Note) {
     const targetNote = note || selectedNote;
 
     if (!profile) {
@@ -451,8 +451,6 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
             const hasAttachments = false;
             const owner = isOwner(note);
             const posterName = note.poster_name || 'Verified User';
-            const posterCity = note.city;
-
             return (
               <motion.article
                 id={`note-${note.id}`}
@@ -828,7 +826,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     <motion.button
                       whileHover={requesting ? {} : { scale: 1.02 }}
                       whileTap={requesting ? {} : { scale: 0.98 }}
-                      onClick={handleRequestConnect}
+                      onClick={() => handleRequestConnect()}
                       disabled={requesting}
                       className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >

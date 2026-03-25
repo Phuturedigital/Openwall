@@ -52,7 +52,7 @@ export function ResetPassword() {
 
     checkRecoverySession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, _session) => {
       if (!mounted) return;
 
       if (event === 'PASSWORD_RECOVERY') {

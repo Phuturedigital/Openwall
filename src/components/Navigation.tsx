@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { LayoutGrid, Plus, CreditCard, Menu, X, Moon, Sun, Clock, Inbox } from 'lucide-react';
+import { LayoutGrid, Plus, Menu, X, Moon, Sun, Clock, Inbox } from 'lucide-react';
 import { useState } from 'react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useAuth } from '../contexts/AuthContext';

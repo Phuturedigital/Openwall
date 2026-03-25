@@ -33,9 +33,11 @@ In Netlify Dashboard:
 2. Add these variables:
 
 ```
-VITE_SUPABASE_URL=https://ixgeuzmbzbfgksxyvkuu.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4Z2V1em1iemJmZ2tzeHl2a3V1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3MTEzNjIsImV4cCI6MjA3ODI4NzM2Mn0.yZzCAtax452TO5wqD8oHVBex4YgCyLgqVORUIZ8gds4
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+Find these values in your Supabase dashboard under **Project Settings → API**.
 
 ### Step 4: Deploy
 

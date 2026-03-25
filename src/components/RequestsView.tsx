@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Check, X, Clock, Shield, MapPin } from 'lucide-react';
 import { supabase, ConnectionRequest } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { LoadingLogo } from './LoadingLogo';
 import { RequestsListSkeleton } from './LoadingSkeleton';
 
 type Tab = 'received' | 'sent';
