@@ -39,13 +39,6 @@ export function UserProfileDropdown({ onViewChange, onSignOut }: UserProfileDrop
 
   if (!user || !profile) return null;
 
-  const getUserRole = () => {
-    if (!profile.user_type) return 'Freelancer';
-    if (profile.user_type === 'client') return 'Poster';
-    if (profile.user_type === 'vendor') return 'Provider';
-    return 'Dual Role';
-  };
-
   const getInitials = (name: string) => {
     if (!name) return 'U';
     const parts = name.split(' ');
@@ -109,9 +102,9 @@ export function UserProfileDropdown({ onViewChange, onSignOut }: UserProfileDrop
                     {profile.full_name || 'User'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {profile.skills && profile.skills.length > 0
-                      ? profile.skills.slice(0, 2).join(', ')
-                      : getUserRole()}
+                    {profile.services_offered && profile.services_offered.length > 0
+                      ? profile.services_offered.slice(0, 2).join(', ')
+                      : profile.city || 'Openwall member'}
                   </p>
                 </div>
               </div>
@@ -132,16 +125,14 @@ export function UserProfileDropdown({ onViewChange, onSignOut }: UserProfileDrop
                 <span className="font-medium">Profile</span>
               </button>
 
-              {(profile.user_type === 'client' || profile.user_type === 'hybrid') && (
-                <button
-                  onClick={() => handleNavigation('my-notes')}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                  role="menuitem"
-                >
-                  <FileText className="w-4 h-4" aria-hidden="true" />
-                  <span className="font-medium">My Notes</span>
-                </button>
-              )}
+              <button
+                onClick={() => handleNavigation('my-notes')}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                role="menuitem"
+              >
+                <FileText className="w-4 h-4" aria-hidden="true" />
+                <span className="font-medium">My Notes</span>
+              </button>
 
               <button
                 onClick={() => handleNavigation('past-notes')}
