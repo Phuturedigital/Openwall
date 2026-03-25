@@ -25,11 +25,22 @@ export function RequestsView() {
 
     setLoading(true);
 
-    const { data: received } = await supabase
-      .from('connection_requests')
-      .select('*, notes(*, profiles!notes_user_id_fkey(*)), profiles!connection_requests_freelancer_id_fkey(*)')
-      .eq('notes.user_id', profile.id)
-      .order('created_at', { ascending: false });
+    // Fetch note IDs owned by this user first, then filter requests by those note IDs.
+    // This avoids unreliable PostgREST join-based filtering (.eq('notes.user_id', ...)).
+    const { data: ownedNotes } = await supabase
+      .from('notes')
+      .select('id')
+      .eq('user_id', profile.id);
+
+    const ownedNoteIds = (ownedNotes || []).map((n) => n.id);
+
+    const { data: received } = ownedNoteIds.length > 0
+      ? await supabase
+          .from('connection_requests')
+          .select('*, notes(*, profiles!notes_user_id_fkey(*)), profiles!connection_requests_freelancer_id_fkey(*)')
+          .in('note_id', ownedNoteIds)
+          .order('created_at', { ascending: false })
+      : { data: [] };
 
     const { data: sent } = await supabase
       .from('connection_requests')

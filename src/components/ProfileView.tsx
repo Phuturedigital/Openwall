@@ -54,7 +54,9 @@ export function ProfileView() {
       setServicesOffered(profile.services_offered || []);
       setWorkMode(profile.work_mode || 'both');
       setHelpNeeded(profile.help_needed || []);
-      setPreferredWorkMode(profile.work_mode || 'either');
+      // Map vendor work_mode values to buyer equivalents ('both' -> 'either')
+      const wm = profile.work_mode || '';
+      setPreferredWorkMode(wm === 'both' ? 'either' : (wm || 'either'));
     }
   }, [profile]);
 
