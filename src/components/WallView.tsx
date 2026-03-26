@@ -199,7 +199,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       .from('public_notes_feed')
       .select('title')
       .not('title', 'is', null)
-      .ilike('title', `%${q}%`)
+      .ilike('title', `%${q.replace(/[%_]/g, '')}%`)
       .limit(5);
 
     const titleSuggs = (titleData || [])
@@ -238,7 +238,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       .maybeSingle();
 
     if (request) {
-      setRequestStatus(request.status as any);
+      setRequestStatus(request.status as typeof requestStatus);
 
       if (request.status === 'approved') {
         const { data: hasUnlocked } = await supabase.rpc('check_user_has_unlocked', {
@@ -271,9 +271,13 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       query = query.eq('city', selectedCity);
     }
 
-    const effectiveSearch = localSearch.trim() || searchQuery.trim();
-    if (effectiveSearch) {
-      query = query.or(`body.ilike.%${effectiveSearch}%,title.ilike.%${effectiveSearch}%,city.ilike.%${effectiveSearch}%,category.ilike.%${effectiveSearch}%,area.ilike.%${effectiveSearch}%`);
+    const rawSearch = localSearch.trim() || searchQuery.trim();
+    if (rawSearch) {
+      // Escape characters that have special meaning in PostgREST filter syntax
+      const effectiveSearch = rawSearch.replace(/[,.()"\\]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (effectiveSearch) {
+        query = query.or(`body.ilike.%${effectiveSearch}%,title.ilike.%${effectiveSearch}%,city.ilike.%${effectiveSearch}%,category.ilike.%${effectiveSearch}%,area.ilike.%${effectiveSearch}%`);
+      }
     }
 
     // Date filter
@@ -378,8 +382,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       } else {
         alert('Request processed. Please check your Requests page for status.');
       }
-    } catch (err: any) {
-      const errorMessage = err?.message || 'Unknown error occurred';
+    } catch (err: unknown) {
+      const errorMessage = (err as Error)?.message || 'Unknown error occurred';
       alert(`Failed to send connection request: ${errorMessage}`);
     } finally {
       setRequesting(false);
@@ -407,9 +411,9 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
       if (fullNote) setFullNoteData(fullNote);
       setUnlocked(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Unlock error:', err);
-      alert(err?.message || 'Failed to unlock contact. Please try again.');
+      alert((err as Error)?.message || 'Failed to unlock contact. Please try again.');
     } finally {
       setUnlocking(false);
     }

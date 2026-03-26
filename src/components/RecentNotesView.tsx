@@ -66,8 +66,9 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
         .from('public_notes_feed')
         .select('*');
 
-      if (searchQuery.trim()) {
-        query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
+      const sanitized = searchQuery.replace(/[,.()"\\]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (sanitized) {
+        query = query.or(`body.ilike.%${sanitized}%,title.ilike.%${sanitized}%,city.ilike.%${sanitized}%`);
       }
 
       const { data, error } = await query
@@ -105,7 +106,7 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
       .maybeSingle();
 
     if (request) {
-      setRequestStatus(request.status as any);
+      setRequestStatus(request.status as typeof requestStatus);
 
       if (request.status === 'approved') {
         const { data: hasUnlocked } = await supabase.rpc('check_user_has_unlocked', {
@@ -168,9 +169,9 @@ export function RecentNotesView({ searchQuery = '' }: RecentNotesViewProps) {
 
       if (fullNote) setFullNoteData(fullNote);
       setIsUnlocked(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error unlocking contact:', err);
-      alert(err?.message || 'Failed to unlock contact. Please try again.');
+      alert((err as Error)?.message || 'Failed to unlock contact. Please try again.');
     } finally {
       setUnlocking(false);
     }

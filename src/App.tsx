@@ -79,7 +79,10 @@ function AppContent() {
       setShowToast(true);
     };
 
-    const handleOpenPostModal = () => handlePostClick();
+    const handleOpenPostModal = () => {
+      if (!user) { setShowAuthModal(true); return; }
+      setShowPostModal(true);
+    };
 
     window.addEventListener('note-fulfilled', handleNoteFulfilled);
     window.addEventListener('note-reposted', handleNoteReposted);

@@ -92,7 +92,7 @@ export function FloatingSearchBar({
       .from('public_notes_feed')
       .select('title')
       .not('title', 'is', null)
-      .ilike('title', `%${q}%`)
+      .ilike('title', `%${q.replace(/[%_]/g, '')}%`)
       .limit(5);
 
     const titleSuggs = (data || [])

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Upload, Image as ImageIcon, FileText, Trash2 } from 'lucide-react';
+import { X, Upload, FileText, Trash2 } from 'lucide-react';
 import { supabase, FileAttachment, ImageAttachment } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SA_CITIES } from '../lib/constants';
@@ -39,7 +39,6 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile?.city) setCity(profile.city);
@@ -50,49 +49,10 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
     return () => imagePreviews.forEach((url) => URL.revokeObjectURL(url));
   }, [imagePreviews]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const incoming = Array.from(e.target.files);
-    const valid: File[] = [];
-    const skipped: string[] = [];
-
-    for (const f of incoming) {
-      if (!f.type.startsWith('image/')) { skipped.push(f.name + ' (not an image)'); continue; }
-      if (f.size > 2 * 1024 * 1024) { skipped.push(f.name + ' (over 2MB)'); continue; }
-      valid.push(f);
-    }
-
-    const combined = [...images, ...valid].slice(0, 5);
-    setImages(combined);
-    setImagePreviews(combined.map((f, i) => i < images.length ? imagePreviews[i] : URL.createObjectURL(f)));
-
-    if (skipped.length) setError(`Skipped: ${skipped.join(', ')}. Images must be under 2MB.`);
-    e.target.value = '';
-  };
-
   const removeImage = (idx: number) => {
     URL.revokeObjectURL(imagePreviews[idx]);
     setImages((prev) => prev.filter((_, i) => i !== idx));
     setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const valid: File[] = [];
-    const skipped: string[] = [];
-
-    for (const f of Array.from(e.target.files)) {
-      const ok = f.type === 'application/pdf' ||
-        f.type === 'application/msword' ||
-        f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      if (!ok) { skipped.push(f.name + ' (not PDF/Word)'); continue; }
-      if (f.size > 20 * 1024 * 1024) { skipped.push(f.name + ' (over 20MB)'); continue; }
-      valid.push(f);
-    }
-
-    if (skipped.length) setError(`Skipped: ${skipped.join(', ')}. Only PDF/DOCX under 20MB.`);
-    setFiles((prev) => [...prev, ...valid]);
-    e.target.value = '';
   };
 
   const removeFile = (idx: number) => setFiles((prev) => prev.filter((_, i) => i !== idx));
