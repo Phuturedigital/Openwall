@@ -79,16 +79,20 @@ function AppContent() {
       setShowToast(true);
     };
 
+    const handleOpenPostModal = () => handlePostClick();
+
     window.addEventListener('note-fulfilled', handleNoteFulfilled);
     window.addEventListener('note-reposted', handleNoteReposted);
     window.addEventListener('profile-saved', handleProfileSaved);
+    window.addEventListener('open-post-modal', handleOpenPostModal);
 
     return () => {
       window.removeEventListener('note-fulfilled', handleNoteFulfilled);
       window.removeEventListener('note-reposted', handleNoteReposted);
       window.removeEventListener('profile-saved', handleProfileSaved);
+      window.removeEventListener('open-post-modal', handleOpenPostModal);
     };
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
