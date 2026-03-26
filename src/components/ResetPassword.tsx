@@ -31,40 +31,46 @@ export function ResetPassword() {
   useEffect(() => {
     let mounted = true;
 
-    const checkRecoverySession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-
-        if (!mounted) return;
-
-        if (!session) {
-          setIsValidSession(false);
-          return;
-        }
-
-        setIsValidSession(true);
-      } catch (err) {
-        if (mounted) {
-          setIsValidSession(false);
-        }
+    // Give Supabase up to 6 seconds to process the recovery token from the URL.
+    // If no PASSWORD_RECOVERY event fires by then, mark the link as invalid.
+    const fallbackTimer = setTimeout(() => {
+      if (mounted && isValidSession === null) {
+        setIsValidSession(false);
       }
-    };
+    }, 6000);
 
-    checkRecoverySession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, _session) => {
+    // Primary: listen for the PASSWORD_RECOVERY event that Supabase fires
+    // after it exchanges the token/code from the URL hash or query string.
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
 
       if (event === 'PASSWORD_RECOVERY') {
+        clearTimeout(fallbackTimer);
         setIsValidSession(true);
         setError('');
+      } else if (event === 'SIGNED_IN' && session) {
+        // Some Supabase versions fire SIGNED_IN instead of PASSWORD_RECOVERY
+        clearTimeout(fallbackTimer);
+        setIsValidSession(true);
       } else if (event === 'SIGNED_OUT') {
+        clearTimeout(fallbackTimer);
         setIsValidSession(false);
+      }
+    });
+
+    // Secondary: if a session already exists (e.g. user opened the link in a
+    // tab where they were already logged in), accept it immediately.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session) {
+        clearTimeout(fallbackTimer);
+        setIsValidSession(true);
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimer);
       authListener?.subscription.unsubscribe();
     };
   }, []);
@@ -123,9 +129,11 @@ export function ResetPassword() {
     } catch (err: any) {
       const errorMessage = err.message || 'An error occurred';
       if (errorMessage.includes('same password')) {
-        setError('Please choose a different password.');
+        setError('Please choose a different password from your current one.');
+      } else if (errorMessage.includes('expired') || errorMessage.includes('invalid')) {
+        setError('Reset link has expired. Please request a new one.');
       } else {
-        setError('Reset link invalid or expired. Request a new one.');
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -141,7 +149,7 @@ export function ResetPassword() {
           className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-md w-full text-center"
         >
           <LoadingLogo className="w-16 h-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
-          <p className="text-gray-600 dark:text-gray-400">Verifying reset link...</p>
+          <p className="text-gray-600 dark:text-gray-400">Verifying your reset link, please wait...</p>
         </motion.div>
       </div>
     );
