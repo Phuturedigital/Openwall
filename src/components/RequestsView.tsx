@@ -307,6 +307,12 @@ export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
                         {request.status === 'approved' && request.notes?.contact && (
                           <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl space-y-1.5">
                             <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-2">Contact details unlocked</p>
+                            {(request.notes.profiles?.full_name || request.notes.profiles?.email) && (
+                              <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 font-medium pb-1.5 border-b border-green-200 dark:border-green-800 mb-1.5">
+                                <Shield className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+                                {request.notes.profiles.full_name || request.notes.profiles.email?.split('@')[0]}
+                              </div>
+                            )}
                             {request.notes.contact.email && (
                               <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
                                 <Mail className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />

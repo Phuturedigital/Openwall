@@ -29,6 +29,7 @@ function AppContent() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<ToastType>('success');
+  const [requestsTab, setRequestsTab] = useState<'received' | 'sent'>('received');
 
   const showToastMessage = (message: string, type: ToastType = 'success') => {
     setToastMessage(message);
@@ -106,6 +107,12 @@ function AppContent() {
   };
 
   const handleViewChange = (view: string) => {
+    // Support 'requests:sent' and 'requests:received' to open a specific tab
+    if (view.startsWith('requests:')) {
+      const tab = view.split(':')[1] as 'received' | 'sent';
+      setRequestsTab(tab);
+      view = 'requests';
+    }
     if (!user && (view === 'my-notes' || view === 'requests' || view === 'payments' || view === 'profile')) {
       setShowAuthModal(true);
       return;
@@ -154,7 +161,7 @@ function AppContent() {
       case 'requests':
         return (
           <Suspense fallback={loadingFallback}>
-            <RequestsView />
+            <RequestsView initialTab={requestsTab} />
           </Suspense>
         );
       case 'payments':

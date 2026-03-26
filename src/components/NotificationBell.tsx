@@ -171,9 +171,13 @@ export function NotificationBell({ onViewChange }: NotificationBellProps = {}) {
 
     setIsOpen(false);
 
-    // Request notifications always navigate to the requests view
-    if (notification.type === 'request_received' || notification.type === 'request_approved' || notification.type === 'request_declined') {
-      if (onViewChange) onViewChange('requests');
+    // Route request notifications to the correct tab
+    if (notification.type === 'request_received') {
+      if (onViewChange) onViewChange('requests:received');
+      return;
+    }
+    if (notification.type === 'request_approved' || notification.type === 'request_declined') {
+      if (onViewChange) onViewChange('requests:sent');
       return;
     }
 
