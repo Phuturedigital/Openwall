@@ -171,31 +171,15 @@ export function NotificationBell({ onViewChange }: NotificationBellProps = {}) {
 
     setIsOpen(false);
 
-    if (notification.note_id) {
-      if (window.location.pathname === '/' || window.location.pathname === '/wall') {
-        const noteElement = document.getElementById(`note-${notification.note_id}`);
-        if (noteElement) {
-          noteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          noteElement.classList.add('note-highlight');
-          setTimeout(() => {
-            noteElement.classList.remove('note-highlight');
-          }, 2000);
-          return;
-        }
-      }
+    // Request notifications always navigate to the requests view
+    if (notification.type === 'request_received' || notification.type === 'request_approved' || notification.type === 'request_declined') {
+      if (onViewChange) onViewChange('requests');
+      return;
+    }
 
+    if (notification.note_id) {
       if (onViewChange) {
-        onViewChange('wall');
-        setTimeout(() => {
-          const noteElement = document.getElementById(`note-${notification.note_id}`);
-          if (noteElement) {
-            noteElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            noteElement.classList.add('note-highlight');
-            setTimeout(() => {
-              noteElement.classList.remove('note-highlight');
-            }, 2000);
-          }
-        }, 300);
+        onViewChange('my-notes');
       }
     } else if (notification.link) {
       if (notification.link.startsWith('/')) {
@@ -385,11 +369,11 @@ export function NotificationBell({ onViewChange }: NotificationBellProps = {}) {
       <AnimatePresence>
         {toastNotification && (
           <motion.div
-            initial={{ opacity: 0, y: -20, x: 20 }}
+            initial={{ opacity: 0, y: 20, x: 20 }}
             animate={{ opacity: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, y: -20, x: 20 }}
-            transition={{ duration: 0.3 }}
-            className="fixed top-20 right-4 z-50 max-w-sm"
+            exit={{ opacity: 0, y: 20, x: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-8 right-4 z-50 max-w-sm"
           >
             <button
               onClick={() => handleToastClick(toastNotification)}

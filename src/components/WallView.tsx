@@ -81,7 +81,13 @@ type WallViewProps = {
   onSignInRequired?: () => void;
 };
 
-const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
+const SA_CITIES = [
+  'Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Port Elizabeth',
+  'Bloemfontein', 'East London', 'Pietermaritzburg', 'Polokwane', 'Nelspruit',
+  'Rustenburg', 'Kimberley', 'George', 'Richards Bay', 'Witbank',
+  'Sandton', 'Midrand', 'Centurion', 'Soweto', 'Benoni',
+  'Boksburg', 'Roodepoort', 'Germiston', 'Stellenbosch', 'Paarl',
+];
 
 export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) {
   const [notes, setNotes] = useState<PublicNote[]>([]);
@@ -109,13 +115,10 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Default to showing all notes — user can filter by city if they want
   useEffect(() => {
-    if (profile && profile.city) {
-      setSelectedCity(profile.city);
-    } else if (!profile) {
-      setSelectedCity(MAJOR_CITIES[0]);
-    }
-  }, [profile]);
+    setSelectedCity('');
+  }, []);
 
   useEffect(() => {
     setPage(0);
@@ -375,49 +378,30 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
     <div className="min-h-screen bg-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          {profile ? (
-            <div className="flex flex-col gap-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Showing creatives near you — {selectedCity || 'All Locations'}
-              </h2>
-              <div className="flex flex-wrap gap-3">
-                {MAJOR_CITIES.map((city) => (
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            {selectedCity ? `Showing notes in ${selectedCity}` : 'All notes across South Africa'}
+          </h2>
+          <div className="overflow-x-auto pb-2 -mx-4 px-4">
+            <div className="flex gap-2 w-max">
+              {['All', ...SA_CITIES].map((city) => {
+                const value = city === 'All' ? '' : city;
+                const isActive = selectedCity === value;
+                return (
                   <button
                     key={city}
-                    onClick={() => setSelectedCity(city)}
-                    className={`px-6 py-2 rounded-full font-medium transition-all ${
-                      selectedCity === city
-                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    onClick={() => setSelectedCity(value)}
+                    className={`relative px-5 py-2 rounded-full font-medium text-sm transition-colors whitespace-nowrap ${
+                      isActive
+                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
                     {city}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Browse by city
-              </h2>
-              <div className="flex flex-wrap gap-3">
-                {MAJOR_CITIES.map((city) => (
-                  <button
-                    key={city}
-                    onClick={() => setSelectedCity(city)}
-                    className={`px-6 py-2 rounded-full font-medium transition-all ${
-                      selectedCity === city
-                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {city}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {loading && page === 0 && (

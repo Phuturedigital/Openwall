@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, X, Clock, Shield, MapPin } from 'lucide-react';
+import { Check, X, Clock, Shield, MapPin, Mail, Phone } from 'lucide-react';
 import { supabase, ConnectionRequest } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { RequestsListSkeleton } from './LoadingSkeleton';
 
 type Tab = 'received' | 'sent';
 
-export function RequestsView() {
+type RequestsViewProps = {
+  initialTab?: Tab;
+};
+
+export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('received');
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [receivedRequests, setReceivedRequests] = useState<ConnectionRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<ConnectionRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +22,18 @@ export function RequestsView() {
     if (profile) {
       loadRequests();
     }
+  }, [profile]);
+
+  // Realtime: reload when any connection_request changes for this user
+  useEffect(() => {
+    if (!profile) return;
+    const channel = supabase
+      .channel('requests-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'connection_requests' }, () => {
+        loadRequests();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [profile]);
 
   async function loadRequests() {
@@ -273,6 +289,24 @@ export function RequestsView() {
                           )}
                           {request.notes?.city && <span>{request.notes.city}</span>}
                         </div>
+
+                        {request.status === 'approved' && request.notes?.contact && (
+                          <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl space-y-1.5">
+                            <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-2">Contact details unlocked</p>
+                            {request.notes.contact.email && (
+                              <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
+                                <Mail className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+                                <a href={`mailto:${request.notes.contact.email}`} className="hover:underline">{request.notes.contact.email}</a>
+                              </div>
+                            )}
+                            {request.notes.contact.phone && (
+                              <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
+                                <Phone className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+                                <a href={`tel:${request.notes.contact.phone}`} className="hover:underline">{request.notes.contact.phone}</a>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <span
