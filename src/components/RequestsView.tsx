@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Check, X, Clock, Shield, MapPin, Mail, Phone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, X, Clock, Shield, MapPin, Mail, Phone, ChevronRight } from 'lucide-react';
 import { supabase, ConnectionRequest } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { RequestsListSkeleton } from './LoadingSkeleton';
+import { RequesterProfileModal } from './RequesterProfileModal';
 
 type Tab = 'received' | 'sent';
 
@@ -17,6 +18,7 @@ export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
   const [receivedRequests, setReceivedRequests] = useState<ConnectionRequest[]>([]);
   const [sentRequests, setSentRequests] = useState<ConnectionRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileRequest, setProfileRequest] = useState<ConnectionRequest | null>(null);
 
   useEffect(() => {
     if (profile) {
@@ -168,102 +170,114 @@ export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
                 key={request.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-white dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
               >
                 {activeTab === 'received' ? (
                   <div>
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {request.profiles?.full_name || 'Anonymous'}
-                          </h3>
-                          {request.profiles?.verified && (
-                            <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />
-                          )}
-                        </div>
-
-                        {request.profiles?.profession && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                            {request.profiles.profession}
-                          </p>
-                        )}
-
-                        {request.profiles?.skills && request.profiles.skills.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {request.profiles.skills.map((skill) => (
-                              <span
-                                key={skill}
-                                className="px-2.5 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium"
-                              >
-                                {skill}
-                              </span>
-                            ))}
+                    {/* Clickable requester identity row */}
+                    <button
+                      onClick={() => setProfileRequest(request)}
+                      className="w-full text-left px-6 pt-5 pb-4 hover:bg-gray-50 dark:hover:bg-[#161616] transition-colors group"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {/* Avatar */}
+                          <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0">
+                            <span className="text-sm font-bold text-white dark:text-gray-900">
+                              {(request.profiles?.full_name || 'A').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                            </span>
                           </div>
-                        )}
-
-                        {request.profiles?.bio && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 italic">
-                            "{request.profiles.bio}"
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                          {request.profiles?.city && (
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {request.profiles.city}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-900 dark:text-white text-sm truncate group-hover:underline">
+                                {request.profiles?.full_name || 'Anonymous'}
+                              </span>
+                              {request.profiles?.verified && (
+                                <Shield className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                              )}
                             </div>
-                          )}
-                          {request.profiles?.experience && (
-                            <span>{request.profiles.experience}</span>
-                          )}
-                          <span>Requested {formatTime(request.created_at)}</span>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              {request.profiles?.profession && <span>{request.profiles.profession}</span>}
+                              {request.profiles?.city && (
+                                <span className="flex items-center gap-0.5">
+                                  <MapPin className="w-3 h-3" />
+                                  {request.profiles.city}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs text-gray-400 dark:text-gray-500 hidden sm:inline">View profile</span>
+                          <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors" />
                         </div>
                       </div>
+                    </button>
 
-                      {request.status === 'pending' ? (
-                        <div className="flex items-center gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleApprove(request.id)}
-                            className="p-2 bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/40 transition-colors cursor-pointer"
-                          >
-                            <Check className="w-5 h-5" />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleDecline(request.id)}
-                            className="p-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/40 transition-colors cursor-pointer"
-                          >
-                            <X className="w-5 h-5" />
-                          </motion.button>
+                    {/* Note preview + quick actions */}
+                    <div className="px-6 pb-5">
+                      {/* Skills preview */}
+                      {request.profiles?.skills && request.profiles.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {request.profiles.skills.slice(0, 4).map((skill) => (
+                            <span key={skill} className="px-2.5 py-1 bg-gray-100 dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#2a2a2a] text-gray-600 dark:text-gray-400 rounded-full text-xs">
+                              {skill}
+                            </span>
+                          ))}
+                          {request.profiles.skills.length > 4 && (
+                            <span className="px-2.5 py-1 text-gray-400 dark:text-gray-500 text-xs">
+                              +{request.profiles.skills.length - 4} more
+                            </span>
+                          )}
                         </div>
-                      ) : (
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            request.status === 'approved'
-                              ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                              : request.status === 'declined'
-                              ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
-                              : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400'
-                          }`}
-                        >
-                          {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                        </span>
                       )}
-                    </div>
 
-                    <div className="pt-4 border-t border-gray-100 dark:border-gray-700">
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">For your note:</p>
-                      <p className="text-gray-900 dark:text-white line-clamp-2">{request.notes?.body}</p>
-                      {request.notes?.budget && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                          Budget: <span className="font-semibold">{formatBudget(request.notes.budget)}</span>
-                        </p>
-                      )}
+                      <div className="pt-3 border-t border-gray-100 dark:border-[#1e1e1e] mb-4">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">Requesting access to your note:</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-2">{request.notes?.body}</p>
+                        {request.notes?.budget && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Budget: <span className="font-semibold text-gray-700 dark:text-gray-300">{formatBudget(request.notes.budget)}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Bottom actions row */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-400 dark:text-gray-500">
+                          {formatTime(request.created_at)}
+                        </span>
+                        {request.status === 'pending' ? (
+                          <div className="flex items-center gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={(e) => { e.stopPropagation(); handleApprove(request.id); }}
+                              className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-xs font-semibold hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              Approve
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={(e) => { e.stopPropagation(); handleDecline(request.id); }}
+                              className="flex items-center gap-1.5 px-4 py-2 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              Decline
+                            </motion.button>
+                          </div>
+                        ) : (
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            request.status === 'approved'
+                              ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                              : 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                          }`}>
+                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -330,6 +344,17 @@ export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {profileRequest && (
+          <RequesterProfileModal
+            request={profileRequest}
+            onClose={() => setProfileRequest(null)}
+            onApprove={(id) => { handleApprove(id); }}
+            onDecline={(id) => { handleDecline(id); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

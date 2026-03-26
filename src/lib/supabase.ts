@@ -37,6 +37,9 @@ export type Profile = {
   help_needed: string[];
   discovery_preference: string | null;
   post_visibility: string;
+  instagram_url: string | null;
+  linkedin_url: string | null;
+  website_url: string | null;
   last_active: string;
   created_at: string;
 };
