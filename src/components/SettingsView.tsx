@@ -127,8 +127,7 @@ export function SettingsView() {
       }
 
       setEmailSuccess(true);
-      setNewEmail('');
-      setTimeout(() => setEmailSuccess(false), 10000);
+      setTimeout(() => { setEmailSuccess(false); setNewEmail(''); }, 10000);
     } catch (err) {
       setEmailError('An unexpected error occurred');
     } finally {

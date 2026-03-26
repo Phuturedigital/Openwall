@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock, Instagram, Linkedin, Globe } from 'lucide-react';
+import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock, Instagram, Linkedin, Globe, Phone } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SA_CITIES } from '../lib/constants';
@@ -29,6 +29,9 @@ export function ProfileView() {
   const [discoveryPreference, setDiscoveryPreference] = useState('my_city');
   const [postVisibility, setPostVisibility] = useState('public');
 
+  const [profession, setProfession] = useState('');
+  const [skills, setSkills] = useState<string[]>([]);
+
   const [instagramUrl, setInstagramUrl] = useState('');
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
@@ -36,8 +39,10 @@ export function ProfileView() {
   const [saving, setSaving] = useState(false);
   const [servicesInput, setServicesInput] = useState('');
   const [helpInput, setHelpInput] = useState('');
+  const [skillsInput, setSkillsInput] = useState('');
   const [showServicesDropdown, setShowServicesDropdown] = useState(false);
   const [showHelpDropdown, setShowHelpDropdown] = useState(false);
+  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [showGuideMessage, setShowGuideMessage] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -54,6 +59,8 @@ export function ProfileView() {
       setWorkMode(profile.work_mode || 'both');
       setDiscoveryPreference(profile.discovery_preference || 'my_city');
       setPostVisibility(profile.post_visibility || 'public');
+      setProfession(profile.profession || '');
+      setSkills(profile.skills || []);
       setInstagramUrl(profile.instagram_url || '');
       setLinkedinUrl(profile.linkedin_url || '');
       setWebsiteUrl(profile.website_url || '');
@@ -77,9 +84,11 @@ export function ProfileView() {
         full_name: fullName,
         city,
         area,
-        phone,
+        phone: phone.trim() || null,
         company_name: companyName,
         bio,
+        profession: profession.trim() || null,
+        skills,
         services_offered: servicesOffered,
         help_needed: helpNeeded,
         work_mode: workMode,
@@ -120,6 +129,16 @@ export function ProfileView() {
 
   const removeHelpNeeded = (item: string) => setHelpNeeded(helpNeeded.filter((i) => i !== item));
 
+  const addSkill = (skill: string) => {
+    if (skills.length < 10 && !skills.includes(skill)) {
+      setSkills([...skills, skill]);
+    }
+    setSkillsInput('');
+    setShowSkillsDropdown(false);
+  };
+
+  const removeSkill = (skill: string) => setSkills(skills.filter((s) => s !== skill));
+
   const handleShowGuideAgain = () => {
     setShowGuideMessage(true);
     setTimeout(() => window.location.reload(), 500);
@@ -138,6 +157,9 @@ export function ProfileView() {
   );
   const filteredHelpSkills = SERVICE_SKILLS.filter(
     (s) => s.toLowerCase().includes(helpInput.toLowerCase()) && !helpNeeded.includes(s)
+  );
+  const filteredSkillsList = SERVICE_SKILLS.filter(
+    (s) => s.toLowerCase().includes(skillsInput.toLowerCase()) && !skills.includes(s)
   );
 
   return (
@@ -191,6 +213,32 @@ export function ProfileView() {
               onChange={(e) => setCompanyName(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
               placeholder="Acme Inc."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="flex items-center gap-2"><Briefcase className="w-4 h-4" />Profession / Job title <span className="text-gray-400 font-normal">(optional)</span></div>
+            </label>
+            <input
+              type="text"
+              value={profession}
+              onChange={(e) => setProfession(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+              placeholder="e.g. Graphic Designer, Developer, Consultant"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="flex items-center gap-2"><Phone className="w-4 h-4" />Phone number <span className="text-gray-400 font-normal">(optional)</span></div>
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
+              placeholder="+27 82 000 0000"
             />
           </div>
 
@@ -283,6 +331,47 @@ export function ProfileView() {
                 <span key={service} className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg text-sm font-medium">
                   {service}
                   <button onClick={() => removeService(service)} className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors cursor-pointer">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Skills */}
+          <div className="pt-6 border-t border-gray-200 dark:border-gray-700 space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-1">
+                <Shield className="w-5 h-5" />Skills
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Technical skills and tools you're proficient in (max 10)</p>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={skillsInput}
+                onChange={(e) => { setSkillsInput(e.target.value); setShowSkillsDropdown(true); }}
+                onFocus={() => setShowSkillsDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSkillsDropdown(false), 200)}
+                disabled={skills.length >= 10}
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                placeholder={skills.length >= 10 ? 'Maximum reached' : 'Search: React, Python, Photoshop...'}
+              />
+              {showSkillsDropdown && skillsInput && filteredSkillsList.length > 0 && skills.length < 10 && (
+                <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  {filteredSkillsList.slice(0, 10).map((skill) => (
+                    <button key={skill} onClick={() => addSkill(skill)} className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white transition-colors cursor-pointer">
+                      {skill}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <span key={skill} className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm font-medium">
+                  {skill}
+                  <button onClick={() => removeSkill(skill)} className="hover:bg-green-200 dark:hover:bg-green-800 rounded-full p-0.5 transition-colors cursor-pointer">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
