@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock, Instagram, Linkedin, Globe, Phone, Camera, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -7,11 +7,39 @@ import { SA_CITIES } from '../lib/constants';
 import { ChangePasswordModal } from './ChangePasswordModal';
 
 const SERVICE_SKILLS = [
-  'Logo Design', 'Branding', 'Web Design', 'UI/UX', 'Graphic Design',
-  'Content Writing', 'Copywriting', 'SEO', 'Social Media',
-  'React', 'Python', 'Node.js', 'WordPress', 'Shopify',
-  'Video Editing', 'Photography', 'Admin Support', 'Data Entry',
-  'Customer Service', 'Project Management', 'Consulting',
+  // Design
+  'Logo Design', 'Branding', 'Brand Identity', 'Web Design', 'UI/UX', 'Graphic Design',
+  'Illustration', 'Motion Graphics', 'Print Design', 'Packaging Design', 'Figma', 'Adobe XD',
+  'Photoshop', 'Illustrator', 'InDesign', 'Canva', 'Pitch Decks', 'Infographics',
+  // Writing & Content
+  'Content Writing', 'Copywriting', 'Blog Writing', 'Technical Writing', 'Proofreading',
+  'Editing', 'Grant Writing', 'Press Releases', 'Email Marketing', 'Newsletter Writing',
+  'Script Writing', 'Creative Writing', 'Academic Writing', 'Proposal Writing',
+  // Development
+  'React', 'Next.js', 'Vue.js', 'Angular', 'TypeScript', 'JavaScript', 'Python',
+  'Node.js', 'Django', 'FastAPI', 'PHP', 'Laravel', 'Ruby on Rails', 'Flutter',
+  'React Native', 'iOS Development', 'Android Development', 'WordPress', 'Shopify',
+  'WooCommerce', 'Webflow', 'Wix', 'Squarespace', 'REST APIs', 'GraphQL',
+  'PostgreSQL', 'MySQL', 'MongoDB', 'Firebase', 'Supabase', 'AWS', 'Docker',
+  // Marketing & Growth
+  'SEO', 'Google Ads', 'Facebook Ads', 'Social Media', 'Social Media Management',
+  'Influencer Marketing', 'Content Strategy', 'Growth Hacking', 'Email Campaigns',
+  'Community Management', 'TikTok Marketing', 'Instagram Marketing', 'LinkedIn Marketing',
+  'Analytics', 'Google Analytics', 'CRO', 'Affiliate Marketing',
+  // Tech & IT
+  'IT Support', 'Network Administration', 'Cybersecurity', 'Cloud Computing',
+  'System Administration', 'Data Analysis', 'Data Science', 'Machine Learning',
+  'AI Prompting', 'Tableau', 'Power BI', 'Excel', 'Google Sheets', 'Automation',
+  // Media & Creative
+  'Video Editing', 'Videography', 'Photography', 'Product Photography', 'Drone Photography',
+  'Podcast Editing', 'Audio Production', 'Music Production', 'Voice Over', 'Animation',
+  '2D Animation', '3D Modelling', 'After Effects', 'Premiere Pro',
+  // Business & Operations
+  'Admin Support', 'Virtual Assistant', 'Data Entry', 'Customer Service',
+  'Project Management', 'Scrum / Agile', 'Business Analysis', 'Process Improvement',
+  'Consulting', 'Strategy', 'Financial Modelling', 'Bookkeeping', 'Accounting',
+  'Legal Research', 'HR Consulting', 'Recruitment', 'Training & Development',
+  'Translations', 'Event Planning', 'Public Relations',
 ];
 
 export function ProfileView() {
@@ -49,6 +77,34 @@ export function ProfileView() {
   const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
   const [showGuideMessage, setShowGuideMessage] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [dbSkillSuggestions, setDbSkillSuggestions] = useState<string[]>([]);
+
+  // Fetch popular skills/services already used by other profiles for live suggestions
+  const fetchDbSuggestions = useCallback(async (q: string) => {
+    if (q.trim().length < 2) { setDbSkillSuggestions([]); return; }
+    const lower = q.toLowerCase();
+    const { data } = await supabase
+      .from('profiles')
+      .select('skills, services_offered')
+      .limit(200);
+    if (!data) return;
+    const all = data.flatMap((p) => [...(p.skills || []), ...(p.services_offered || [])]);
+    const unique = [...new Set(all)]
+      .filter((s) => s && s.toLowerCase().includes(lower))
+      .sort((a, b) => {
+        const aStarts = a.toLowerCase().startsWith(lower);
+        const bStarts = b.toLowerCase().startsWith(lower);
+        return aStarts === bStarts ? 0 : aStarts ? -1 : 1;
+      })
+      .slice(0, 8);
+    setDbSkillSuggestions(unique);
+  }, []);
+
+  useEffect(() => {
+    const active = servicesInput || skillsInput || helpInput;
+    const timer = setTimeout(() => fetchDbSuggestions(active), 300);
+    return () => clearTimeout(timer);
+  }, [servicesInput, skillsInput, helpInput, fetchDbSuggestions]);
 
   useEffect(() => {
     if (profile) {
@@ -202,15 +258,22 @@ export function ProfileView() {
     );
   }
 
-  const filteredServicesSkills = SERVICE_SKILLS.filter(
-    (s) => s.toLowerCase().includes(servicesInput.toLowerCase()) && !servicesOffered.includes(s)
-  );
-  const filteredHelpSkills = SERVICE_SKILLS.filter(
-    (s) => s.toLowerCase().includes(helpInput.toLowerCase()) && !helpNeeded.includes(s)
-  );
-  const filteredSkillsList = SERVICE_SKILLS.filter(
-    (s) => s.toLowerCase().includes(skillsInput.toLowerCase()) && !skills.includes(s)
-  );
+  const blendSuggestions = (input: string, excluded: string[]) => {
+    const lower = input.toLowerCase();
+    const fromStatic = SERVICE_SKILLS.filter(
+      (s) => s.toLowerCase().includes(lower) && !excluded.includes(s)
+    ).sort((a, b) => {
+      const aStarts = a.toLowerCase().startsWith(lower);
+      const bStarts = b.toLowerCase().startsWith(lower);
+      return aStarts === bStarts ? 0 : aStarts ? -1 : 1;
+    });
+    const fromDb = dbSkillSuggestions.filter((s) => !excluded.includes(s) && !fromStatic.includes(s));
+    return [...fromStatic, ...fromDb].slice(0, 10);
+  };
+
+  const filteredServicesSkills = servicesInput ? blendSuggestions(servicesInput, servicesOffered) : [];
+  const filteredHelpSkills = helpInput ? blendSuggestions(helpInput, helpNeeded) : [];
+  const filteredSkillsList = skillsInput ? blendSuggestions(skillsInput, skills) : [];
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
