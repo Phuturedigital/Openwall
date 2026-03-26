@@ -360,81 +360,92 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
               </div>
             </div>
 
-            {/* ── Images (public, max 2 MB each, max 5) ───────────────── */}
+            {/* ── Combined upload dropzone ─────────────────────────────── */}
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <ImageIcon className="w-4 h-4 text-gray-500" />
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Images <span className="text-gray-400 font-normal">(optional · max 5 · 2 MB each · visible publicly)</span>
-                </label>
-              </div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Attachments <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
 
-              {imagePreviews.length > 0 && (
-                <div className="flex flex-wrap gap-3 mb-3">
-                  {imagePreviews.map((src, idx) => (
-                    <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 group">
-                      <img src={src} alt="" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-                        aria-label="Remove image"
-                      >
-                        <Trash2 className="w-4 h-4 text-white" />
+              {/* Previews / file list */}
+              {(imagePreviews.length > 0 || files.length > 0) && (
+                <div className="mb-3 space-y-2">
+                  {imagePreviews.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {imagePreviews.map((src, idx) => (
+                        <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 group">
+                          <img src={src} alt="" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                            aria-label="Remove image"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-white" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {files.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2.5 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{file.name}</span>
+                        <span className="text-xs text-gray-400 flex-shrink-0">{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+                      </div>
+                      <button type="button" onClick={() => removeFile(idx)} className="text-red-400 hover:text-red-600 ml-2 flex-shrink-0 cursor-pointer">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              {images.length < 5 && (
-                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 transition-colors cursor-pointer">
-                  <Upload className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {images.length === 0 ? 'Add images' : `Add more (${images.length}/5)`}
-                  </span>
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-
-            {/* ── Brief / Document (private, max 20 MB) ───────────────── */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-gray-500" />
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Brief / Document <span className="text-gray-400 font-normal">(optional · PDF or Word · max 20 MB · private — only approved vendors see this)</span>
-                </label>
-              </div>
-
-              <div className="space-y-2">
-                {files.map((file, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{file.name}</span>
-                      <span className="text-xs text-gray-400 flex-shrink-0">
-                        {(file.size / (1024 * 1024)).toFixed(1)} MB
-                      </span>
-                    </div>
-                    <button type="button" onClick={() => removeFile(idx)} className="text-red-500 hover:text-red-600 ml-2 flex-shrink-0 cursor-pointer">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 transition-colors cursor-pointer">
-                  <Upload className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Attach brief or document</span>
-                  <input type="file" multiple accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
-                </label>
-              </div>
+              {/* Single drop zone */}
+              <label className="flex flex-col items-center justify-center gap-1.5 p-5 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 dark:hover:border-blue-500 transition-colors cursor-pointer">
+                <Upload className="w-5 h-5 text-gray-400" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Drop files here or click to browse
+                </span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 text-center">
+                  Images (JPG, PNG · 2 MB max · public) &nbsp;·&nbsp; Briefs (PDF, Word · 20 MB max · private)
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  onChange={(e) => {
+                    if (!e.target.files) return;
+                    const imgFiles: File[] = [];
+                    const docFiles: File[] = [];
+                    const skipped: string[] = [];
+                    for (const f of Array.from(e.target.files)) {
+                      if (f.type.startsWith('image/')) {
+                        if (f.size > 2 * 1024 * 1024) { skipped.push(`${f.name} (over 2 MB)`); continue; }
+                        imgFiles.push(f);
+                      } else if (
+                        f.type === 'application/pdf' ||
+                        f.type === 'application/msword' ||
+                        f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                      ) {
+                        if (f.size > 20 * 1024 * 1024) { skipped.push(`${f.name} (over 20 MB)`); continue; }
+                        docFiles.push(f);
+                      } else {
+                        skipped.push(`${f.name} (unsupported type)`);
+                      }
+                    }
+                    if (imgFiles.length) {
+                      const combined = [...images, ...imgFiles].slice(0, 5);
+                      setImages(combined);
+                      setImagePreviews(combined.map((f, i) => i < images.length ? imagePreviews[i] : URL.createObjectURL(f)));
+                    }
+                    if (docFiles.length) setFiles((prev) => [...prev, ...docFiles]);
+                    if (skipped.length) setError(`Skipped: ${skipped.join(', ')}`);
+                    e.target.value = '';
+                  }}
+                  className="hidden"
+                />
+              </label>
             </div>
 
             <div className="flex gap-3 pt-4">
