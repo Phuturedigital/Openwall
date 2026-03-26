@@ -118,6 +118,11 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   const [localSearch, setLocalSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [budgetMin, setBudgetMin] = useState('');
+  const [budgetMax, setBudgetMax] = useState('');
+  const [selectedMode, setSelectedMode] = useState<'all' | 'remote' | 'on_site'>('all');
+  const [dateFilter, setDateFilter] = useState<'any' | 'today' | 'week' | 'month'>('any');
+  const [sortBy, setSortBy] = useState<'newest' | 'budget_low' | 'budget_high' | 'featured'>('newest');
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -136,7 +141,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   useEffect(() => {
     setPage(0);
     loadNotes(0);
-  }, [localSearch, selectedCity]);
+  }, [localSearch, selectedCity, sortBy, dateFilter, budgetMin, budgetMax, selectedMode]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -229,9 +234,42 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       query = query.or(`body.ilike.%${effectiveSearch}%,title.ilike.%${effectiveSearch}%,city.ilike.%${effectiveSearch}%,category.ilike.%${effectiveSearch}%,area.ilike.%${effectiveSearch}%`);
     }
 
+    // Date filter
+    if (dateFilter !== 'any') {
+      const now = new Date();
+      let from: Date;
+      if (dateFilter === 'today') {
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      } else if (dateFilter === 'week') {
+        from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      } else {
+        from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      }
+      query = query.gte('created_at', from.toISOString());
+    }
+
+    // Budget filter (stored in cents)
+    if (budgetMin) query = query.gte('budget', parseFloat(budgetMin) * 100);
+    if (budgetMax) query = query.lte('budget', parseFloat(budgetMax) * 100);
+
+    // Work mode filter
+    if (selectedMode !== 'all') {
+      query = query.eq('work_mode', selectedMode);
+    }
+
+    // Sort
+    if (sortBy === 'featured') {
+      query = query.order('prio', { ascending: false }).order('created_at', { ascending: false });
+    } else if (sortBy === 'budget_low') {
+      query = query.order('prio', { ascending: false }).order('budget', { ascending: true });
+    } else if (sortBy === 'budget_high') {
+      query = query.order('prio', { ascending: false }).order('budget', { ascending: false });
+    } else {
+      // newest (default)
+      query = query.order('created_at', { ascending: false });
+    }
+
     const { data, error } = await query
-      .order('prio', { ascending: false })
-      .order('created_at', { ascending: false })
       .range(pageNum * NOTES_PER_PAGE, (pageNum + 1) * NOTES_PER_PAGE - 1);
 
     if (error) {
@@ -388,7 +426,10 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
   const isOwner = (note: PublicNote) => note.is_owner;
 
-  const hasActiveFilters = selectedCity !== '' || selectedCategory !== '';
+  const hasActiveFilters =
+    selectedCity !== '' || selectedCategory !== '' ||
+    budgetMin !== '' || budgetMax !== '' ||
+    selectedMode !== 'all' || dateFilter !== 'any' || sortBy !== 'newest';
 
   const displayNotes = selectedCategory
     ? notes.filter((n) => (n.category || getCategoryFromText(n.body)) === selectedCategory)
@@ -400,7 +441,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
         {/* Filter bar */}
         <div className="mb-8 space-y-2">
-          {/* Row 1: Search + Location + Filters */}
+          {/* Row 1: Search + Location + Sort + Filters */}
           <div className="flex flex-col sm:flex-row gap-2">
             {/* Search pill */}
             <div className="relative flex-1">
@@ -414,28 +455,42 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
               />
             </div>
 
-            {/* Location + Filters */}
             <div className="flex gap-2">
               {/* Location pill */}
-              <div className="relative flex-1 sm:flex-none sm:w-44">
+              <div className="relative flex-1 sm:flex-none sm:w-36">
                 <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full pl-9 pr-8 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all appearance-none cursor-pointer"
+                  className="w-full pl-9 pr-7 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">All</option>
                   {SA_CITIES.map((city) => (
                     <option key={city} value={city}>{city}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+              </div>
+
+              {/* Sort By pill */}
+              <div className="relative hidden sm:block">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="pl-3.5 pr-7 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="budget_low">Lowest Budget</option>
+                  <option value="budget_high">Highest Budget</option>
+                  <option value="featured">Featured First</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
               </div>
 
               {/* Filters toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium border transition-all cursor-pointer whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-3 rounded-full text-sm font-medium border transition-all cursor-pointer whitespace-nowrap ${
                   hasActiveFilters
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
                     : 'bg-gray-100 dark:bg-[#111] text-gray-600 dark:text-gray-400 border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#1a1a1a]'
@@ -443,7 +498,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                 aria-label="Toggle filters"
               >
                 <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
-                <span className="hidden xs:inline">Filters</span>
+                <span>Filters</span>
               </button>
             </div>
           </div>
@@ -459,6 +514,21 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                 className="overflow-hidden"
               >
                 <div className="flex flex-wrap items-center gap-2 p-4 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-2xl">
+                  {/* Sort (mobile only — desktop shows in row 1) */}
+                  <div className="relative sm:hidden">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                      className="pl-3.5 pr-8 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 appearance-none cursor-pointer focus:outline-none"
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="budget_low">Lowest Budget</option>
+                      <option value="budget_high">Highest Budget</option>
+                      <option value="featured">Featured First</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                  </div>
+
                   {/* Category */}
                   <div className="relative">
                     <select
@@ -474,9 +544,73 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
                   </div>
 
+                  {/* Budget min / max */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">R</span>
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        min="0"
+                        value={budgetMin}
+                        onChange={(e) => setBudgetMin(e.target.value)}
+                        className="w-24 pl-6 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                      />
+                    </div>
+                    <span className="text-gray-400 dark:text-gray-600 text-xs select-none">–</span>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">R</span>
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        min="0"
+                        value={budgetMax}
+                        onChange={(e) => setBudgetMax(e.target.value)}
+                        className="w-24 pl-6 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Mode */}
+                  <div className="relative">
+                    <select
+                      value={selectedMode}
+                      onChange={(e) => setSelectedMode(e.target.value as 'all' | 'remote' | 'on_site')}
+                      className="pl-3.5 pr-8 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                    >
+                      <option value="all">All</option>
+                      <option value="remote">Remote</option>
+                      <option value="on_site">On-site</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                  </div>
+
+                  {/* Posted Date */}
+                  <div className="relative">
+                    <select
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value as 'any' | 'today' | 'week' | 'month')}
+                      className="pl-3.5 pr-8 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                    >
+                      <option value="any">Any time</option>
+                      <option value="today">Today</option>
+                      <option value="week">Last 7 days</option>
+                      <option value="month">Last 30 days</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                  </div>
+
                   {hasActiveFilters && (
                     <button
-                      onClick={() => { setSelectedCity(''); setSelectedCategory(''); }}
+                      onClick={() => {
+                        setSelectedCity('');
+                        setSelectedCategory('');
+                        setBudgetMin('');
+                        setBudgetMax('');
+                        setSelectedMode('all');
+                        setDateFilter('any');
+                        setSortBy('newest');
+                      }}
                       className="flex items-center gap-1.5 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
                     >
                       <X className="w-3.5 h-3.5" aria-hidden="true" />

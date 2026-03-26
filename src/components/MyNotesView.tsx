@@ -24,8 +24,9 @@ const CATEGORIES = [
   { value: 'other', label: 'Other' },
 ];
 
-type BudgetRange = '' | 'under500' | '500to2000' | '2000to5000' | 'over5000';
 type WorkMode = 'all' | 'remote' | 'on_site';
+type SortBy = 'newest' | 'oldest' | 'budget_low' | 'budget_high' | 'featured';
+type DateFilter = 'any' | 'today' | 'week' | 'month';
 
 const PASTEL_COLORS = [
   '#FEF3C7', '#DBEAFE', '#FCE7F3', '#E0E7FF', '#D1FAE5',
@@ -71,8 +72,11 @@ export function MyNotesView() {
   const [selectedCity, setSelectedCity] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedBudget, setSelectedBudget] = useState<BudgetRange>('');
+  const [budgetMin, setBudgetMin] = useState('');
+  const [budgetMax, setBudgetMax] = useState('');
   const [selectedMode, setSelectedMode] = useState<WorkMode>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('any');
+  const [sortBy, setSortBy] = useState<SortBy>('newest');
 
   useEffect(() => {
     loadMyNotes();
@@ -148,36 +152,65 @@ export function MyNotesView() {
     }
   }
 
-  const hasActiveAdvancedFilters = selectedCategory !== '' || selectedBudget !== '' || selectedMode !== 'all';
+  const hasActiveAdvancedFilters =
+    selectedCategory !== '' || budgetMin !== '' || budgetMax !== '' ||
+    selectedMode !== 'all' || dateFilter !== 'any';
 
   function resetAdvancedFilters() {
     setSelectedCategory('');
-    setSelectedBudget('');
+    setBudgetMin('');
+    setBudgetMax('');
     setSelectedMode('all');
+    setDateFilter('any');
   }
 
-  const filteredNotes = notes.filter((note) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      const matches =
-        note.body.toLowerCase().includes(q) ||
-        (note.title?.toLowerCase().includes(q)) ||
-        (note.category?.toLowerCase().includes(q)) ||
-        (note.city?.toLowerCase().includes(q));
-      if (!matches) return false;
-    }
-    if (selectedCity && note.city !== selectedCity) return false;
-    if (selectedCategory && note.category !== selectedCategory) return false;
-    if (selectedBudget) {
-      const b = note.budget ?? 0;
-      if (selectedBudget === 'under500' && b >= 50000) return false;
-      if (selectedBudget === '500to2000' && (b < 50000 || b > 200000)) return false;
-      if (selectedBudget === '2000to5000' && (b < 200000 || b > 500000)) return false;
-      if (selectedBudget === 'over5000' && b < 500000) return false;
-    }
-    if (selectedMode !== 'all' && note.work_mode !== selectedMode) return false;
-    return true;
-  });
+  const filteredNotes = notes
+    .filter((note) => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matches =
+          note.body.toLowerCase().includes(q) ||
+          note.title?.toLowerCase().includes(q) ||
+          note.category?.toLowerCase().includes(q) ||
+          note.city?.toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+      if (selectedCity && note.city !== selectedCity) return false;
+      if (selectedCategory && note.category !== selectedCategory) return false;
+      if (budgetMin) {
+        const minCents = parseFloat(budgetMin) * 100;
+        if ((note.budget ?? 0) < minCents) return false;
+      }
+      if (budgetMax) {
+        const maxCents = parseFloat(budgetMax) * 100;
+        if ((note.budget ?? 0) > maxCents) return false;
+      }
+      if (selectedMode !== 'all' && note.work_mode !== selectedMode) return false;
+      if (dateFilter !== 'any') {
+        const noteDate = new Date(note.created_at);
+        const now = new Date();
+        if (dateFilter === 'today') {
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          if (noteDate < today) return false;
+        } else if (dateFilter === 'week') {
+          if (noteDate < new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)) return false;
+        } else if (dateFilter === 'month') {
+          if (noteDate < new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)) return false;
+        }
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'featured') {
+        if (a.prio && !b.prio) return -1;
+        if (!a.prio && b.prio) return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      if (sortBy === 'budget_low') return (a.budget ?? 0) - (b.budget ?? 0);
+      if (sortBy === 'budget_high') return (b.budget ?? 0) - (a.budget ?? 0);
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); // newest
+    });
 
   const formatBudget = (cents: number | null) => {
     if (!cents) return null;
@@ -244,7 +277,7 @@ export function MyNotesView() {
 
         {/* Filter bar */}
         <div className="mb-6 space-y-2">
-          {/* Row 1: Search + Location + Filters */}
+          {/* Row 1: Search + Location + Sort + Filters */}
           <div className="flex flex-col sm:flex-row gap-2">
             {/* Search pill */}
             <div className="relative flex-1">
@@ -258,28 +291,43 @@ export function MyNotesView() {
               />
             </div>
 
-            {/* Location + Filters */}
             <div className="flex gap-2">
               {/* Location dropdown pill */}
-              <div className="relative flex-1 sm:flex-none sm:w-40">
+              <div className="relative flex-1 sm:flex-none sm:w-36">
                 <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
                 <select
                   value={selectedCity}
                   onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full pl-9 pr-8 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all appearance-none cursor-pointer"
+                  className="w-full pl-9 pr-7 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all appearance-none cursor-pointer"
                 >
                   <option value="">All</option>
                   {SA_CITIES.map((city) => (
                     <option key={city} value={city}>{city}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+              </div>
+
+              {/* Sort By pill */}
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortBy)}
+                  className="pl-3.5 pr-7 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="budget_low">Lowest Budget</option>
+                  <option value="budget_high">Highest Budget</option>
+                  <option value="featured">Featured First</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
               </div>
 
               {/* Filters toggle */}
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium border transition-all cursor-pointer whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-3 rounded-full text-sm font-medium border transition-all cursor-pointer whitespace-nowrap ${
                   hasActiveAdvancedFilters
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
                     : 'bg-gray-100 dark:bg-[#111] text-gray-600 dark:text-gray-400 border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#1a1a1a]'
@@ -287,7 +335,7 @@ export function MyNotesView() {
                 aria-label="Toggle filters"
               >
                 <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
-                <span className="hidden xs:inline">Filters</span>
+                <span>Filters</span>
               </button>
             </div>
           </div>
@@ -318,20 +366,31 @@ export function MyNotesView() {
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
                   </div>
 
-                  {/* Budget */}
-                  <div className="relative">
-                    <select
-                      value={selectedBudget}
-                      onChange={(e) => setSelectedBudget(e.target.value as BudgetRange)}
-                      className="pl-3.5 pr-8 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
-                    >
-                      <option value="">Any</option>
-                      <option value="under500">Under R500</option>
-                      <option value="500to2000">R500–R2k</option>
-                      <option value="2000to5000">R2k–R5k</option>
-                      <option value="over5000">Over R5k</option>
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                  {/* Budget min / max */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">R</span>
+                      <input
+                        type="number"
+                        placeholder="Min"
+                        min="0"
+                        value={budgetMin}
+                        onChange={(e) => setBudgetMin(e.target.value)}
+                        className="w-24 pl-6 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                      />
+                    </div>
+                    <span className="text-gray-400 dark:text-gray-600 text-xs select-none">–</span>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500 pointer-events-none">R</span>
+                      <input
+                        type="number"
+                        placeholder="Max"
+                        min="0"
+                        value={budgetMax}
+                        onChange={(e) => setBudgetMax(e.target.value)}
+                        className="w-24 pl-6 pr-3 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                      />
+                    </div>
                   </div>
 
                   {/* Mode */}
@@ -344,6 +403,21 @@ export function MyNotesView() {
                       <option value="all">All</option>
                       <option value="remote">Remote</option>
                       <option value="on_site">On-site</option>
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                  </div>
+
+                  {/* Posted Date */}
+                  <div className="relative">
+                    <select
+                      value={dateFilter}
+                      onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                      className="pl-3.5 pr-8 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                    >
+                      <option value="any">Any time</option>
+                      <option value="today">Today</option>
+                      <option value="week">Last 7 days</option>
+                      <option value="month">Last 30 days</option>
                     </select>
                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
                   </div>
