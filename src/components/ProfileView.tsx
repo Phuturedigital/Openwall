@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock, Instagram, Linkedin, Globe } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { SA_CITIES } from '../lib/constants';
 import { ChangePasswordModal } from './ChangePasswordModal';
 
-const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
 const SERVICE_SKILLS = [
   'Logo Design', 'Branding', 'Web Design', 'UI/UX', 'Graphic Design',
   'Content Writing', 'Copywriting', 'SEO', 'Social Media',
@@ -34,7 +34,6 @@ export function ProfileView() {
   const [websiteUrl, setWebsiteUrl] = useState('');
 
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
   const [servicesInput, setServicesInput] = useState('');
   const [helpInput, setHelpInput] = useState('');
   const [showServicesDropdown, setShowServicesDropdown] = useState(false);
@@ -61,13 +60,16 @@ export function ProfileView() {
     }
   }, [profile]);
 
+  const dispatchToast = (message: string, type: 'success' | 'error' | 'info') => {
+    window.dispatchEvent(new CustomEvent('profile-saved', { detail: { message, type } }));
+  };
+
   const handleSave = async () => {
     if (!profile) return;
-    if (!fullName.trim()) { setMessage('Please enter your name'); return; }
-    if (!city.trim()) { setMessage('Please select a city'); return; }
+    if (!fullName.trim()) { dispatchToast('Please enter your name', 'error'); return; }
+    if (!city.trim()) { dispatchToast('Please select a city', 'error'); return; }
 
     setSaving(true);
-    setMessage('Saving...');
 
     const { error } = await supabase
       .from('profiles')
@@ -91,12 +93,10 @@ export function ProfileView() {
 
     setSaving(false);
     if (error) {
-      setMessage(`Failed to update profile: ${error.message}`);
-      setTimeout(() => setMessage(''), 5000);
+      dispatchToast(`Failed to update profile: ${error.message}`, 'error');
     } else {
       await refreshProfile();
-      setMessage('Profile updated successfully');
-      setTimeout(() => setMessage(''), 3000);
+      dispatchToast('Profile updated successfully', 'success');
     }
   };
 
@@ -232,7 +232,7 @@ export function ProfileView() {
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
               >
                 <option value="">Select city</option>
-                {MAJOR_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {SA_CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div>
@@ -440,20 +440,6 @@ export function ProfileView() {
               </div>
             </div>
           </div>
-
-          {message && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`p-4 rounded-xl ${
-                message.includes('success')
-                  ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                  : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-              }`}
-            >
-              {message}
-            </motion.div>
-          )}
 
           <motion.button
             whileHover={{ scale: 1.02 }}

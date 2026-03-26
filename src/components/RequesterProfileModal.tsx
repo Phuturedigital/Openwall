@@ -47,7 +47,7 @@ export function RequesterProfileModal({
   const requester = request.profiles as Profile;
   const note = request.notes;
   const isPending = request.status === 'pending';
-  const name = requester?.full_name || 'Anonymous';
+  const name = requester?.full_name || requester?.email?.split('@')[0] || 'User';
   const initials = getInitials(name);
 
   const hasSocialLinks = requester?.instagram_url || requester?.linkedin_url || requester?.website_url;

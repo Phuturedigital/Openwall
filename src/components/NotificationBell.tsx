@@ -373,7 +373,7 @@ export function NotificationBell({ onViewChange }: NotificationBellProps = {}) {
             animate={{ opacity: 1, y: 0, x: 0 }}
             exit={{ opacity: 0, y: 20, x: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-8 right-4 z-50 max-w-sm"
+            className="fixed bottom-8 right-8 z-[60] max-w-sm"
           >
             <button
               onClick={() => handleToastClick(toastNotification)}

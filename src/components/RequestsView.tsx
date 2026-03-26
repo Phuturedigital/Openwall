@@ -184,13 +184,13 @@ export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
                           {/* Avatar */}
                           <div className="w-10 h-10 rounded-xl bg-gray-900 dark:bg-white flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-bold text-white dark:text-gray-900">
-                              {(request.profiles?.full_name || 'A').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                              {(request.profiles?.full_name || request.profiles?.email?.split('@')[0] || 'U').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()}
                             </span>
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-gray-900 dark:text-white text-sm truncate group-hover:underline">
-                                {request.profiles?.full_name || 'Anonymous'}
+                                {request.profiles?.full_name || request.profiles?.email?.split('@')[0] || 'User'}
                               </span>
                               {request.profiles?.verified && (
                                 <Shield className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
@@ -286,7 +286,7 @@ export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
                       <div className="flex-1">
                         <div className="mb-3">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                            To: <span className="font-medium text-gray-900 dark:text-white">{request.notes?.profiles?.full_name || 'Anonymous'}</span>
+                            To: <span className="font-medium text-gray-900 dark:text-white">{request.notes?.profiles?.full_name || request.notes?.profiles?.email?.split('@')[0] || 'User'}</span>
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {formatTime(request.created_at)}

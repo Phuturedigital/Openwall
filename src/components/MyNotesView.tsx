@@ -3,16 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, CreditCard as Edit2, Trash2, CheckCircle, Eye, Users, Search, SlidersHorizontal, MapPin, ChevronDown } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { SA_CITIES } from '../lib/constants';
 import { EditNoteModal } from './EditNoteModal';
 import { NotesGridSkeleton } from './LoadingSkeleton';
 
-const SA_CITIES = [
-  'Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Port Elizabeth',
-  'Bloemfontein', 'East London', 'Nelspruit', 'Polokwane', 'Kimberley',
-  'Rustenburg', 'George', 'Pietermaritzburg', 'Stellenbosch', 'Paarl',
-  'Knysna', 'Mossel Bay', 'Upington', 'Tzaneen', 'Centurion',
-  'Sandton', 'Soweto', 'Roodepoort', 'Midrand', 'Witbank',
-];
 
 const CATEGORIES = [
   { value: 'design', label: 'Design' },

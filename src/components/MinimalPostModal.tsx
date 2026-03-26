@@ -3,13 +3,12 @@ import { motion } from 'framer-motion';
 import { X, Upload } from 'lucide-react';
 import { supabase, FileAttachment } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { SA_CITIES } from '../lib/constants';
 
 type MinimalPostModalProps = {
   onClose: () => void;
   onSuccess: (city: string) => void;
 };
-
-const MAJOR_CITIES = ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria'];
 
 function detectCategory(text: string): string {
   const lowerText = text.toLowerCase();
@@ -280,7 +279,7 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all bg-white dark:bg-gray-700 text-gray-900 dark:text-white cursor-pointer"
                 >
                   <option value="">Select city</option>
-                  {MAJOR_CITIES.map((cityName) => (
+                  {SA_CITIES.map((cityName) => (
                     <option key={cityName} value={cityName}>{cityName}</option>
                   ))}
                 </select>

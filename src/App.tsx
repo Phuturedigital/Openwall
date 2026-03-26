@@ -71,12 +71,21 @@ function AppContent() {
       }, 2000);
     };
 
+    const handleProfileSaved = (e: Event) => {
+      const detail = (e as CustomEvent<{ message: string; type?: string }>).detail;
+      setToastMessage(detail.message);
+      setToastType((detail.type as ToastType) || 'success');
+      setShowToast(true);
+    };
+
     window.addEventListener('note-fulfilled', handleNoteFulfilled);
     window.addEventListener('note-reposted', handleNoteReposted);
+    window.addEventListener('profile-saved', handleProfileSaved);
 
     return () => {
       window.removeEventListener('note-fulfilled', handleNoteFulfilled);
       window.removeEventListener('note-reposted', handleNoteReposted);
+      window.removeEventListener('profile-saved', handleProfileSaved);
     };
   }, []);
 

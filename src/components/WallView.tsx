@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle, MapPin, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { supabase, Note, PublicNote } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { SA_CITIES } from '../lib/constants';
 import { EditNoteModal } from './EditNoteModal';
 import { LoadingLogo } from './LoadingLogo';
 import { NotesGridSkeleton } from './LoadingSkeleton';
@@ -81,13 +82,6 @@ type WallViewProps = {
   onSignInRequired?: () => void;
 };
 
-const SA_CITIES = [
-  'Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Port Elizabeth',
-  'Bloemfontein', 'East London', 'Pietermaritzburg', 'Polokwane', 'Nelspruit',
-  'Rustenburg', 'Kimberley', 'George', 'Richards Bay', 'Witbank',
-  'Sandton', 'Midrand', 'Centurion', 'Soweto', 'Benoni',
-  'Boksburg', 'Roodepoort', 'Germiston', 'Stellenbosch', 'Paarl',
-];
 
 const WALL_CATEGORIES = [
   { value: 'design', label: 'Design' },
@@ -226,7 +220,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       .select('*');
 
     if (selectedCity) {
-      query = query.ilike('city', selectedCity);
+      query = query.eq('city', selectedCity);
     }
 
     const effectiveSearch = localSearch.trim() || searchQuery.trim();
@@ -653,7 +647,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
             const categoryLabel = getCategoryLabel(category);
             const hasAttachments = false;
             const owner = isOwner(note);
-            const posterName = note.poster_name || 'Verified User';
+            const posterName = note.poster_name || 'User';
             return (
               <motion.article
                 id={`note-${note.id}`}
@@ -797,15 +791,9 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
                   <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
                     <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                      {posterName !== 'Verified User' ? (
-                        <div className="w-6 h-6 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-semibold text-[10px] shadow-sm">
-                          {getInitials(posterName)}
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white text-[10px] shadow-sm">
-                          <span>✓</span>
-                        </div>
-                      )}
+                      <div className="w-6 h-6 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-semibold text-[10px] shadow-sm">
+                        {getInitials(posterName)}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-medium truncate">{posterName}</span>
