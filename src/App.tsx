@@ -42,7 +42,8 @@ function AppContent() {
     setSearchQuery(query);
   };
 
-  const showSearchBar = currentView === 'wall' || currentView === 'recent-notes';
+  // WallView now has an inline search bar; FloatingSearchBar only needed for Recent Notes
+  const showSearchBar = currentView === 'recent-notes';
 
   useEffect(() => {
     const hasCompletedOnboarding = localStorage.getItem('onboardingCompleted');

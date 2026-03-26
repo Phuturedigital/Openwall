@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle, MapPin } from 'lucide-react';
+import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle, MapPin, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { supabase, Note, PublicNote } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
@@ -89,6 +89,16 @@ const SA_CITIES = [
   'Boksburg', 'Roodepoort', 'Germiston', 'Stellenbosch', 'Paarl',
 ];
 
+const WALL_CATEGORIES = [
+  { value: 'design', label: 'Design' },
+  { value: 'writing', label: 'Writing' },
+  { value: 'development', label: 'Development' },
+  { value: 'tech', label: 'Tech & IT' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'consulting', label: 'Consulting' },
+  { value: 'other', label: 'Other' },
+];
+
 export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) {
   const [notes, setNotes] = useState<PublicNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,6 +115,9 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('');
+  const [localSearch, setLocalSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -123,7 +136,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   useEffect(() => {
     setPage(0);
     loadNotes(0);
-  }, [searchQuery, selectedCity]);
+  }, [localSearch, selectedCity]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -211,8 +224,9 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       query = query.ilike('city', selectedCity);
     }
 
-    if (searchQuery.trim()) {
-      query = query.or(`body.ilike.%${searchQuery}%,title.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%,area.ilike.%${searchQuery}%`);
+    const effectiveSearch = localSearch.trim() || searchQuery.trim();
+    if (effectiveSearch) {
+      query = query.or(`body.ilike.%${effectiveSearch}%,title.ilike.%${effectiveSearch}%,city.ilike.%${effectiveSearch}%,category.ilike.%${effectiveSearch}%,area.ilike.%${effectiveSearch}%`);
     }
 
     const { data, error } = await query
@@ -374,34 +388,105 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
   const isOwner = (note: PublicNote) => note.is_owner;
 
+  const hasActiveFilters = selectedCity !== '' || selectedCategory !== '';
+
+  const displayNotes = selectedCategory
+    ? notes.filter((n) => (n.category || getCategoryFromText(n.body)) === selectedCategory)
+    : notes;
+
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            {selectedCity ? `Showing notes in ${selectedCity}` : 'All notes across South Africa'}
-          </h2>
-          <div className="overflow-x-auto pb-2 -mx-4 px-4">
-            <div className="flex gap-2 w-max">
-              {['All', ...SA_CITIES].map((city) => {
-                const value = city === 'All' ? '' : city;
-                const isActive = selectedCity === value;
-                return (
-                  <button
-                    key={city}
-                    onClick={() => setSelectedCity(value)}
-                    className={`relative px-5 py-2 rounded-full font-medium text-sm transition-colors whitespace-nowrap ${
-                      isActive
-                        ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                    }`}
-                  >
-                    {city}
-                  </button>
-                );
-              })}
+
+        {/* Filter bar */}
+        <div className="mb-8 space-y-2">
+          {/* Row 1: Search + Location + Filters */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Search pill */}
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                className="w-full pl-11 pr-4 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+              />
+            </div>
+
+            {/* Location + Filters */}
+            <div className="flex gap-2">
+              {/* Location pill */}
+              <div className="relative flex-1 sm:flex-none sm:w-44">
+                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                <select
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full pl-9 pr-8 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all appearance-none cursor-pointer"
+                >
+                  <option value="">All</option>
+                  {SA_CITIES.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+              </div>
+
+              {/* Filters toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-medium border transition-all cursor-pointer whitespace-nowrap ${
+                  hasActiveFilters
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                    : 'bg-gray-100 dark:bg-[#111] text-gray-600 dark:text-gray-400 border-gray-200 dark:border-[#222] hover:bg-gray-200 dark:hover:bg-[#1a1a1a]'
+                }`}
+                aria-label="Toggle filters"
+              >
+                <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+                <span className="hidden xs:inline">Filters</span>
+              </button>
             </div>
           </div>
+
+          {/* Row 2: Advanced filters panel */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-wrap items-center gap-2 p-4 bg-gray-50 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-2xl">
+                  {/* Category */}
+                  <div className="relative">
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="pl-3.5 pr-8 py-2.5 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333] rounded-full text-sm text-gray-700 dark:text-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                    >
+                      <option value="">All services</option>
+                      {WALL_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
+                  </div>
+
+                  {hasActiveFilters && (
+                    <button
+                      onClick={() => { setSelectedCity(''); setSelectedCategory(''); }}
+                      className="flex items-center gap-1.5 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" aria-hidden="true" />
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {loading && page === 0 && (
@@ -428,7 +513,7 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
 
         {!loading || page > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {notes.map((note) => {
+          {displayNotes.map((note) => {
             const category = note.category || getCategoryFromText(note.body);
             const cardColor = getColorForCategory(category);
             const categoryLabel = getCategoryLabel(category);
