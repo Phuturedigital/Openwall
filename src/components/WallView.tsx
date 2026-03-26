@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle, MapPin, Search, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { X, Download, Paperclip, AlertCircle, CreditCard as Edit2, Trash2, CheckCircle, MapPin, Search, SlidersHorizontal, ChevronDown, Tag, Image as ImageIcon } from 'lucide-react';
 import { supabase, Note, PublicNote } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SA_CITIES } from '../lib/constants';
@@ -117,6 +117,9 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
   const [selectedMode, setSelectedMode] = useState<'all' | 'remote' | 'on_site'>('all');
   const [dateFilter, setDateFilter] = useState<'any' | 'today' | 'week' | 'month'>('any');
   const [sortBy, setSortBy] = useState<'newest' | 'budget_low' | 'budget_high' | 'featured'>('newest');
+  const [suggestions, setSuggestions] = useState<{ type: 'city' | 'category' | 'title'; label: string; value: string }[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchWrapperRef = useRef<HTMLDivElement>(null);
   const { profile } = useAuth();
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -165,6 +168,51 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
       setUnlocked(false);
     }
   }, [selectedNote, profile]);
+
+  // Close suggestion dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Debounced autocomplete fetch
+  const fetchSuggestions = useCallback(async (q: string) => {
+    if (q.trim().length < 2) { setSuggestions([]); return; }
+    const lower = q.toLowerCase();
+
+    const citySuggs = SA_CITIES
+      .filter((c) => c.toLowerCase().includes(lower))
+      .slice(0, 3)
+      .map((c) => ({ type: 'city' as const, label: c, value: c }));
+
+    const catSuggs = WALL_CATEGORIES
+      .filter((c) => c.label.toLowerCase().includes(lower))
+      .slice(0, 2)
+      .map((c) => ({ type: 'category' as const, label: c.label, value: c.value }));
+
+    const { data: titleData } = await supabase
+      .from('public_notes_feed')
+      .select('title')
+      .not('title', 'is', null)
+      .ilike('title', `%${q}%`)
+      .limit(5);
+
+    const titleSuggs = (titleData || [])
+      .filter((n: { title: string | null }) => n.title)
+      .map((n: { title: string }) => ({ type: 'title' as const, label: n.title, value: n.title }));
+
+    setSuggestions([...citySuggs, ...catSuggs, ...titleSuggs]);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => fetchSuggestions(localSearch), 300);
+    return () => clearTimeout(timer);
+  }, [localSearch, fetchSuggestions]);
 
   async function checkStatus() {
     if (!selectedNote || !profile) return;
@@ -437,16 +485,51 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
         <div className="mb-8 space-y-2">
           {/* Row 1: Search + Location + Sort + Filters */}
           <div className="flex flex-col sm:flex-row gap-2">
-            {/* Search pill */}
-            <div className="relative flex-1">
+            {/* Search pill with autocomplete */}
+            <div className="relative flex-1" ref={searchWrapperRef}>
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" aria-hidden="true" />
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search notes, cities, categories…"
                 value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
+                onChange={(e) => { setLocalSearch(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => localSearch.length >= 2 && setShowSuggestions(true)}
+                onKeyDown={(e) => { if (e.key === 'Escape') setShowSuggestions(false); }}
                 className="w-full pl-11 pr-4 py-3 bg-gray-100 dark:bg-[#111] border border-gray-200 dark:border-[#222] rounded-full text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 transition-all"
+                autoComplete="off"
               />
+              {/* Autocomplete dropdown */}
+              <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute top-full left-0 right-0 mt-2 z-30 bg-white dark:bg-[#111] border border-gray-200 dark:border-[#2a2a2a] rounded-2xl shadow-xl overflow-hidden"
+                  >
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setLocalSearch(s.value);
+                          if (s.type === 'city') setSelectedCity(s.value);
+                          if (s.type === 'category') setSelectedCategory(s.value);
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-[#1a1a1a] transition-colors border-b border-gray-100 dark:border-[#1e1e1e] last:border-0"
+                      >
+                        {s.type === 'city' && <MapPin className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />}
+                        {s.type === 'category' && <Tag className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />}
+                        {s.type === 'title' && <Search className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />}
+                        <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 truncate">{s.label}</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 capitalize flex-shrink-0">{s.type}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="flex gap-2">
@@ -645,7 +728,8 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
             const category = note.category || getCategoryFromText(note.body);
             const cardColor = getColorForCategory(category);
             const categoryLabel = getCategoryLabel(category);
-            const hasAttachments = false;
+            const hasFiles = !!(fullNoteData?.files?.length);
+            const noteImages = note.images || [];
             const owner = isOwner(note);
             const posterName = note.poster_name || 'User';
             return (
@@ -789,17 +873,37 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     )}
                   </div>
 
+                  {/* Image strip (max 3 thumbnails) */}
+                  {noteImages.length > 0 && (
+                    <div className="flex gap-1.5 mt-2 mb-1">
+                      {noteImages.slice(0, 3).map((img, idx) => (
+                        <div key={idx} className="relative flex-1 aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                      {noteImages.length > 3 && (
+                        <div className="flex-1 aspect-video rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">+{noteImages.length - 3}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-auto pt-4 border-t border-gray-200 dark:border-gray-800 space-y-3">
                     <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                      <div className="w-6 h-6 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-semibold text-[10px] shadow-sm">
-                        {getInitials(posterName)}
+                      <div className="w-6 h-6 rounded-full bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-semibold text-[10px] shadow-sm overflow-hidden">
+                        {note.poster_avatar ? (
+                          <img src={note.poster_avatar} alt={posterName} className="w-full h-full object-cover" />
+                        ) : (
+                          getInitials(posterName)
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-medium truncate">{posterName}</span>
                         </div>
                       </div>
-                      {hasAttachments && (
+                      {hasFiles && (
                         <Paperclip className="w-3.5 h-3.5 text-gray-500 dark:text-gray-600 flex-shrink-0" />
                       )}
                     </div>
@@ -877,6 +981,23 @@ export function WallView({ searchQuery = '', onSignInRequired }: WallViewProps) 
                     {selectedNote.body}
                   </p>
                 </div>
+
+                {/* Public image gallery */}
+                {(selectedNote.images || []).length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                      <ImageIcon className="w-4 h-4" />
+                      <span>Images</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(selectedNote.images || []).map((img, idx) => (
+                        <a key={idx} href={img.url} target="_blank" rel="noopener noreferrer" className="block aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 hover:opacity-90 transition-opacity">
+                          <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                   {selectedNote.budget && (

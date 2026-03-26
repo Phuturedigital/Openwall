@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock, Instagram, Linkedin, Globe, Phone } from 'lucide-react';
+import { User, MapPin, Mail, Building, Shield, Briefcase, FileText, X, HelpCircle, Lock, Instagram, Linkedin, Globe, Phone, Camera, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SA_CITIES } from '../lib/constants';
@@ -36,6 +36,10 @@ export function ProfileView() {
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
 
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
   const [saving, setSaving] = useState(false);
   const [servicesInput, setServicesInput] = useState('');
   const [helpInput, setHelpInput] = useState('');
@@ -64,8 +68,54 @@ export function ProfileView() {
       setInstagramUrl(profile.instagram_url || '');
       setLinkedinUrl(profile.linkedin_url || '');
       setWebsiteUrl(profile.website_url || '');
+      setAvatarUrl(profile.avatar_url || null);
     }
   }, [profile]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    if (!file.type.startsWith('image/')) {
+      dispatchToast('Please select an image file', 'error');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      dispatchToast('Image must be under 2 MB', 'error');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${profile.id}/avatar.${ext}`;
+      // upsert so re-uploads overwrite the old file
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      // Add cache-buster so browser picks up the new image
+      const bustUrl = `${publicUrl}?t=${Date.now()}`;
+
+      const { error: dbError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: bustUrl })
+        .eq('id', profile.id);
+      if (dbError) throw dbError;
+
+      setAvatarUrl(bustUrl);
+      await refreshProfile();
+      dispatchToast('Profile picture updated', 'success');
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      dispatchToast(e.message || 'Failed to upload image', 'error');
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = '';
+    }
+  };
 
   const dispatchToast = (message: string, type: 'success' | 'error' | 'info') => {
     window.dispatchEvent(new CustomEvent('profile-saved', { detail: { message, type } }));
@@ -173,13 +223,54 @@ export function ProfileView() {
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 shadow-sm space-y-8">
 
           {/* Avatar & identity header */}
-          <div className="flex items-center gap-4 pb-8 border-b border-gray-200 dark:border-gray-700">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-              <User className="w-10 h-10 text-white" />
+          <div className="flex items-center gap-5 pb-8 border-b border-gray-200 dark:border-gray-700">
+            {/* Clickable avatar with upload overlay */}
+            <div className="relative flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={uploadingAvatar}
+                className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-gray-200 dark:ring-gray-700 hover:ring-blue-500 transition-all group relative cursor-pointer"
+                aria-label="Change profile picture"
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    {profile.full_name ? (
+                      <span className="text-2xl font-bold text-white">
+                        {profile.full_name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase()}
+                      </span>
+                    ) : (
+                      <User className="w-10 h-10 text-white" />
+                    )}
+                  </div>
+                )}
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                  {uploadingAvatar ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Camera className="w-5 h-5 text-white" />
+                  )}
+                </div>
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+              />
+              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                {uploadingAvatar ? 'Uploading…' : 'Click to change'}
+              </span>
             </div>
-            <div>
+
+            <div className="mt-2">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">{profile.full_name || 'User'}</h2>
-              <p className="text-gray-500 dark:text-gray-400">{profile.email}</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">{profile.email}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Max 2 MB · JPG, PNG, WebP, GIF</p>
               {profile.verified && (
                 <div className="flex items-center gap-1 mt-1">
                   <Shield className="w-4 h-4 text-green-600 dark:text-green-400" />

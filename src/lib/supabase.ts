@@ -40,8 +40,14 @@ export type Profile = {
   instagram_url: string | null;
   linkedin_url: string | null;
   website_url: string | null;
+  avatar_url: string | null;
   last_active: string;
   created_at: string;
+};
+
+export type ImageAttachment = {
+  url: string;
+  name: string;
 };
 
 export type PublicNote = {
@@ -58,10 +64,12 @@ export type PublicNote = {
   status: string;
   created_at: string;
   updated_at: string;
+  images: ImageAttachment[];
   is_currently_prioritised: boolean;
   is_owner: boolean;
   poster_name: string | null;
   poster_profession: string | null;
+  poster_avatar: string | null;
   unlock_count: number;
 };
 
@@ -87,6 +95,7 @@ export type Note = {
   area: string | null;
   work_mode: string | null;
   category: string | null;
+  images: ImageAttachment[];
   files: FileAttachment[];
   contact: ContactInfo | null;
   prio: boolean;

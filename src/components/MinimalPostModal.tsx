@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Upload } from 'lucide-react';
-import { supabase, FileAttachment } from '../lib/supabase';
+import { X, Upload, Image as ImageIcon, FileText, Trash2 } from 'lucide-react';
+import { supabase, FileAttachment, ImageAttachment } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { SA_CITIES } from '../lib/constants';
 
@@ -32,44 +32,92 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
   const [workMode, setWorkMode] = useState('both');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  // Images: public, max 2MB each, max 5 total
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  // Briefs/docs: private, max 20MB each
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile?.city) setCity(profile.city);
   }, [profile]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files).filter(
-        (file) =>
-          (file.type === 'application/pdf' ||
-            file.type === 'application/msword' ||
-            file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') &&
-          file.size <= 10 * 1024 * 1024
-      );
-      if (newFiles.length !== e.target.files.length) {
-        setError('Some files were skipped. Only PDF and DOCX files under 10MB are allowed.');
-      }
-      setFiles((prev) => [...prev, ...newFiles]);
+  // Revoke preview URLs on unmount
+  useEffect(() => {
+    return () => imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+  }, [imagePreviews]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const incoming = Array.from(e.target.files);
+    const valid: File[] = [];
+    const skipped: string[] = [];
+
+    for (const f of incoming) {
+      if (!f.type.startsWith('image/')) { skipped.push(f.name + ' (not an image)'); continue; }
+      if (f.size > 2 * 1024 * 1024) { skipped.push(f.name + ' (over 2MB)'); continue; }
+      valid.push(f);
     }
+
+    const combined = [...images, ...valid].slice(0, 5);
+    setImages(combined);
+    setImagePreviews(combined.map((f, i) => i < images.length ? imagePreviews[i] : URL.createObjectURL(f)));
+
+    if (skipped.length) setError(`Skipped: ${skipped.join(', ')}. Images must be under 2MB.`);
+    e.target.value = '';
   };
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeImage = (idx: number) => {
+    URL.revokeObjectURL(imagePreviews[idx]);
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const valid: File[] = [];
+    const skipped: string[] = [];
+
+    for (const f of Array.from(e.target.files)) {
+      const ok = f.type === 'application/pdf' ||
+        f.type === 'application/msword' ||
+        f.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      if (!ok) { skipped.push(f.name + ' (not PDF/Word)'); continue; }
+      if (f.size > 20 * 1024 * 1024) { skipped.push(f.name + ' (over 20MB)'); continue; }
+      valid.push(f);
+    }
+
+    if (skipped.length) setError(`Skipped: ${skipped.join(', ')}. Only PDF/DOCX under 20MB.`);
+    setFiles((prev) => [...prev, ...valid]);
+    e.target.value = '';
+  };
+
+  const removeFile = (idx: number) => setFiles((prev) => prev.filter((_, i) => i !== idx));
+
+  const uploadImages = async (): Promise<ImageAttachment[]> => {
+    const uploaded: ImageAttachment[] = [];
+    for (const img of images) {
+      const ext = img.name.split('.').pop();
+      const path = `${profile!.id}/images/${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: err } = await supabase.storage.from('attachments').upload(path, img);
+      if (err) throw err;
+      const { data: { publicUrl } } = supabase.storage.from('attachments').getPublicUrl(path);
+      uploaded.push({ url: publicUrl, name: img.name });
+    }
+    return uploaded;
   };
 
   const uploadFiles = async (): Promise<FileAttachment[]> => {
-    if (files.length === 0) return [];
     const uploaded: FileAttachment[] = [];
     for (const file of files) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${profile!.id}/${fileName}`;
-      const { error: uploadError } = await supabase.storage.from('attachments').upload(filePath, file);
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('attachments').getPublicUrl(filePath);
+      const ext = file.name.split('.').pop();
+      const path = `${profile!.id}/${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: err } = await supabase.storage.from('attachments').upload(path, file);
+      if (err) throw err;
+      const { data: { publicUrl } } = supabase.storage.from('attachments').getPublicUrl(path);
       uploaded.push({ name: file.name, url: publicUrl, type: file.type, size: file.size });
     }
     return uploaded;
@@ -79,31 +127,19 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
     e.preventDefault();
     setError('');
 
-    if (!profile) {
-      setError('You must be logged in to post');
-      return;
-    }
-    if (!body.trim()) {
-      setError('Please describe your note');
-      return;
-    }
-    if (!city.trim()) {
-      setError('Please select a city');
-      return;
-    }
+    if (!profile) { setError('You must be logged in to post'); return; }
+    if (!body.trim()) { setError('Please describe your note'); return; }
+    if (!city.trim()) { setError('Please select a city'); return; }
 
     const emailToUse = email.trim() || profile.email;
-    if (!emailToUse) {
-      setError('Email is required');
-      return;
-    }
+    if (!emailToUse) { setError('Email is required'); return; }
 
     setLoading(true);
     try {
-      const attachments = await uploadFiles();
+      const [imageAttachments, fileAttachments] = await Promise.all([uploadImages(), uploadFiles()]);
 
       let budgetInCents = null;
-      if (budget && budget.trim()) {
+      if (budget.trim()) {
         budgetInCents = parseInt(budget.replace(/\D/g, '')) * 100;
         if (isNaN(budgetInCents) || budgetInCents <= 0) {
           setError('Please enter a valid budget amount');
@@ -112,22 +148,18 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
         }
       }
 
-      const contactInfo = {
-        email: emailToUse,
-        phone: phone.trim() || profile.phone || undefined,
-      };
-
       const category = detectCategory(`${title} ${serviceType} ${body}`);
 
-      const noteData: any = {
+      const noteData: Record<string, unknown> = {
         user_id: profile.id,
         title: title.trim() || null,
         body: body.trim(),
         city: city.trim() || null,
         area: area.trim() || null,
         work_mode: workMode,
-        contact: contactInfo,
-        files: attachments,
+        contact: { email: emailToUse, phone: phone.trim() || profile.phone || undefined },
+        images: imageAttachments,
+        files: fileAttachments,
         prio: postType === 'priority',
         color: '#FEF3C7',
         category,
@@ -148,8 +180,9 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
       }
 
       onSuccess(city.trim());
-    } catch (err: any) {
-      setError(err.message || err.hint || 'Failed to create note. Please try again.');
+    } catch (err: unknown) {
+      const e = err as { message?: string; hint?: string };
+      setError(e.message || e.hint || 'Failed to create note. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -327,22 +360,78 @@ export function MinimalPostModal({ onClose, onSuccess }: MinimalPostModalProps) 
               </div>
             </div>
 
+            {/* ── Images (public, max 2 MB each, max 5) ───────────────── */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Attachments (PDF, DOCX)
-              </label>
-              <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-3">
+                <ImageIcon className="w-4 h-4 text-gray-500" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Images <span className="text-gray-400 font-normal">(optional · max 5 · 2 MB each · visible publicly)</span>
+                </label>
+              </div>
+
+              {imagePreviews.length > 0 && (
+                <div className="flex flex-wrap gap-3 mb-3">
+                  {imagePreviews.map((src, idx) => (
+                    <div key={idx} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 group">
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                        aria-label="Remove image"
+                      >
+                        <Trash2 className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {images.length < 5 && (
+                <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 transition-colors cursor-pointer">
+                  <Upload className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {images.length === 0 ? 'Add images' : `Add more (${images.length}/5)`}
+                  </span>
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* ── Brief / Document (private, max 20 MB) ───────────────── */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-gray-500" />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Brief / Document <span className="text-gray-400 font-normal">(optional · PDF or Word · max 20 MB · private — only approved vendors see this)</span>
+                </label>
+              </div>
+
+              <div className="space-y-2">
                 {files.map((file, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
-                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{file.name}</span>
-                    <button type="button" onClick={() => removeFile(idx)} className="text-red-500 hover:text-red-600 text-sm">
-                      Remove
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{file.name}</span>
+                      <span className="text-xs text-gray-400 flex-shrink-0">
+                        {(file.size / (1024 * 1024)).toFixed(1)} MB
+                      </span>
+                    </div>
+                    <button type="button" onClick={() => removeFile(idx)} className="text-red-500 hover:text-red-600 ml-2 flex-shrink-0 cursor-pointer">
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
                 <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-blue-500 transition-colors cursor-pointer">
                   <Upload className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Add files</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Attach brief or document</span>
                   <input type="file" multiple accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
                 </label>
               </div>

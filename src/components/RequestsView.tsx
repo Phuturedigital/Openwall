@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Clock, Shield, MapPin, Mail, Phone, ChevronRight } from 'lucide-react';
+import { Check, X, Clock, Shield, MapPin, Mail, Phone, ChevronRight, Download, FileText } from 'lucide-react';
 import { supabase, ConnectionRequest } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { RequestsListSkeleton } from './LoadingSkeleton';
@@ -323,6 +323,42 @@ export function RequestsView({ initialTab = 'received' }: RequestsViewProps) {
                               <div className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200">
                                 <Phone className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
                                 <a href={`tel:${request.notes.contact.phone}`} className="hover:underline">{request.notes.contact.phone}</a>
+                              </div>
+                            )}
+
+                            {/* Brief / document downloads */}
+                            {request.notes.files && request.notes.files.length > 0 && (
+                              <div className="pt-2 mt-2 border-t border-green-200 dark:border-green-800 space-y-1.5">
+                                <p className="text-xs font-semibold text-green-700 dark:text-green-400">Brief / Documents</p>
+                                {request.notes.files.map((file, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download={file.name}
+                                    className="flex items-center gap-2 p-2 bg-white dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors group"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                    <span className="text-xs text-gray-700 dark:text-gray-300 flex-1 truncate">{file.name}</span>
+                                    <span className="text-xs text-gray-400 flex-shrink-0">{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+                                    <Download className="w-3 h-3 text-green-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Note images (public, already visible on wall but shown here for convenience) */}
+                            {request.notes.images && request.notes.images.length > 0 && (
+                              <div className="pt-2 mt-2 border-t border-green-200 dark:border-green-800">
+                                <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1.5">Images</p>
+                                <div className="flex gap-2 flex-wrap">
+                                  {request.notes.images.slice(0, 4).map((img, idx) => (
+                                    <a key={idx} href={img.url} target="_blank" rel="noopener noreferrer" className="w-16 h-16 rounded-lg overflow-hidden border border-green-200 dark:border-green-700 hover:opacity-90 transition-opacity">
+                                      <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                                    </a>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>
