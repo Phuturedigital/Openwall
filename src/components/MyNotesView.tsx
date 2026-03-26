@@ -1,10 +1,31 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CreditCard as Edit2, Trash2, CheckCircle, Eye, Users } from 'lucide-react';
+import { X, CreditCard as Edit2, Trash2, CheckCircle, Eye, Users, Search, SlidersHorizontal } from 'lucide-react';
 import { supabase, Note } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { EditNoteModal } from './EditNoteModal';
 import { NotesGridSkeleton } from './LoadingSkeleton';
+
+const SA_CITIES = [
+  'Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Port Elizabeth',
+  'Bloemfontein', 'East London', 'Nelspruit', 'Polokwane', 'Kimberley',
+  'Rustenburg', 'George', 'Pietermaritzburg', 'Stellenbosch', 'Paarl',
+  'Knysna', 'Mossel Bay', 'Upington', 'Tzaneen', 'Centurion',
+  'Sandton', 'Soweto', 'Roodepoort', 'Midrand', 'Witbank',
+];
+
+const CATEGORIES = [
+  { value: 'design', label: 'Design' },
+  { value: 'writing', label: 'Writing' },
+  { value: 'development', label: 'Development' },
+  { value: 'tech', label: 'Tech & IT' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'consulting', label: 'Consulting' },
+  { value: 'other', label: 'Other' },
+];
+
+type BudgetRange = '' | 'under500' | '500to2000' | '2000to5000' | 'over5000';
+type WorkMode = 'all' | 'remote' | 'on_site';
 
 const PASTEL_COLORS = [
   '#FEF3C7', '#DBEAFE', '#FCE7F3', '#E0E7FF', '#D1FAE5',
@@ -45,6 +66,13 @@ export function MyNotesView() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [requestCounts, setRequestCounts] = useState<Record<string, number>>({});
   const { profile } = useAuth();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedBudget, setSelectedBudget] = useState<BudgetRange>('');
+  const [selectedMode, setSelectedMode] = useState<WorkMode>('all');
 
   useEffect(() => {
     loadMyNotes();
@@ -120,6 +148,37 @@ export function MyNotesView() {
     }
   }
 
+  const hasActiveAdvancedFilters = selectedCategory !== '' || selectedBudget !== '' || selectedMode !== 'all';
+
+  function resetAdvancedFilters() {
+    setSelectedCategory('');
+    setSelectedBudget('');
+    setSelectedMode('all');
+  }
+
+  const filteredNotes = notes.filter((note) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matches =
+        note.body.toLowerCase().includes(q) ||
+        (note.title?.toLowerCase().includes(q)) ||
+        (note.category?.toLowerCase().includes(q)) ||
+        (note.city?.toLowerCase().includes(q));
+      if (!matches) return false;
+    }
+    if (selectedCity && note.city !== selectedCity) return false;
+    if (selectedCategory && note.category !== selectedCategory) return false;
+    if (selectedBudget) {
+      const b = note.budget ?? 0;
+      if (selectedBudget === 'under500' && b >= 50000) return false;
+      if (selectedBudget === '500to2000' && (b < 50000 || b > 200000)) return false;
+      if (selectedBudget === '2000to5000' && (b < 200000 || b > 500000)) return false;
+      if (selectedBudget === 'over5000' && b < 500000) return false;
+    }
+    if (selectedMode !== 'all' && note.work_mode !== selectedMode) return false;
+    return true;
+  });
+
   const formatBudget = (cents: number | null) => {
     if (!cents) return null;
     return `R${(cents / 100).toFixed(0)}`;
@@ -183,8 +242,121 @@ export function MyNotesView() {
           </p>
         </div>
 
+        {/* Filter bar */}
+        <div className="mb-6 space-y-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder="Search notes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              />
+            </div>
+            <select
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+              className="px-3 py-2.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+            >
+              <option value="">All locations</option>
+              {SA_CITIES.map((city) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl border transition-all cursor-pointer ${
+                hasActiveAdvancedFilters
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
+                  : showAdvancedFilters
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white border-gray-200 dark:border-gray-600'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              aria-label="Toggle advanced filters"
+            >
+              <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+              Filters
+              {hasActiveAdvancedFilters && (
+                <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-gray-900" />
+              )}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showAdvancedFilters && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                  >
+                    <option value="">All services</option>
+                    {CATEGORIES.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedBudget}
+                    onChange={(e) => setSelectedBudget(e.target.value as BudgetRange)}
+                    className="px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                  >
+                    <option value="">Any budget</option>
+                    <option value="under500">Under R500</option>
+                    <option value="500to2000">R500 – R2,000</option>
+                    <option value="2000to5000">R2,000 – R5,000</option>
+                    <option value="over5000">Over R5,000</option>
+                  </select>
+                  <div className="flex rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    {(['all', 'remote', 'on_site'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setSelectedMode(mode)}
+                        className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
+                          selectedMode === mode
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                            : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {mode === 'all' ? 'All' : mode === 'remote' ? 'Remote' : 'On-site'}
+                      </button>
+                    ))}
+                  </div>
+                  {hasActiveAdvancedFilters && (
+                    <button
+                      onClick={resetAdvancedFilters}
+                      className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {filteredNotes.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No notes match your filters.</p>
+            <button
+              onClick={() => { setSearchQuery(''); setSelectedCity(''); resetAdvancedFilters(); }}
+              className="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+            >
+              Clear all filters
+            </button>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {notes.map((note) => {
+          {filteredNotes.map((note) => {
             const cardColor = getColorFromId(note.id);
             const requestCount = requestCounts[note.id] || 0;
 
@@ -280,6 +452,7 @@ export function MyNotesView() {
             );
           })}
         </div>
+        )}
       </div>
 
       <AnimatePresence>
